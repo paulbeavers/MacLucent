@@ -141,7 +141,8 @@ final class WindowManager {
 
     // MARK: - Focus
 
-    /// `raise: false` is used for focus-follows-mouse, so hovering doesn't reshuffle floating windows.
+    /// `raise: false` lets focus-follows-mouse focus without reshuffling floating windows
+    /// (when "Raise on hover" is off).
     func focus(_ w: TileWindow, raise: Bool = true) {
         guard let ws = workspace(of: w) else { return }
         if ws !== current { switchTo(ws.index) }
@@ -469,7 +470,7 @@ final class WindowManager {
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { [weak self] e in
             guard let self, self.config.focusFollowsMouse else { return e }
             if let w = self.window(at: e), w !== self.current.focused, self.desktop.overlay == nil,
-               self.mouseDrag == nil { self.focus(w, raise: false) }
+               self.mouseDrag == nil { self.focus(w, raise: self.config.raiseOnHover) }
             return e
         } as Any)
     }

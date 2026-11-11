@@ -73,7 +73,8 @@ Each workspace is either **tiled** (dwindle) or **floating**. Toggle the current
 them in Settings → Workspaces; the choice is saved. On a floating workspace windows can overlap:
 
 - ⌘-drag moves a window, ⌘-right-drag resizes it, or drag just outside a window's border to resize from that edge
-- clicking a window raises it (focus-follows-mouse focuses without raising)
+- clicking a window raises it; with focus-follows-mouse, hovering raises it too (turn off
+  "Raise on hover" in Settings to focus without raising)
 - new windows open centered and cascade
 
 The tiled arrangement is kept while a workspace floats, so switching back restores it, and each

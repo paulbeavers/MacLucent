@@ -44,6 +44,8 @@ final class SettingsApp: NSObject, TileApp {
         slider("Outer gaps", 0...60, step: 1, fmt: "%.0f px", get: { Double(self.c.gapsOut) }, set: { self.c.gapsOut = CGFloat($0) })
         slider("Border size", 0...8, step: 1, fmt: "%.0f px", get: { Double(self.c.borderSize) }, set: { self.c.borderSize = CGFloat($0) })
         toggle("Focus follows mouse", get: { self.c.focusFollowsMouse }, set: { self.c.focusFollowsMouse = $0 })
+        toggle("Raise on hover", note: "Floating workspaces: hovered window comes to the front",
+               get: { self.c.raiseOnHover }, set: { self.c.raiseOnHover = $0 })
 
         header("Workspaces", "Floating workspaces let windows overlap and be moved freely")
         workspaceModes()

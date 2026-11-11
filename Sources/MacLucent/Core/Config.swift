@@ -43,6 +43,7 @@ struct SettingsFile: Codable {
     var activeBorderEnd: String?
     var inactiveBorder: String?
     var focusFollowsMouse: Bool?
+    var raiseOnHover: Bool?
     var rounding: Double?
     var shadow: Bool?
     var inactiveDim: Double?
@@ -72,6 +73,8 @@ final class Config {
     var activeBorder: [NSColor] = [NSColor(hex: 0x33CCFF, alpha: 0.93), NSColor(hex: 0x00FF99, alpha: 0.93)]
     var inactiveBorder = NSColor(hex: 0x595959, alpha: 0.67)
     var focusFollowsMouse = false
+    /// With focus-follows-mouse on a floating workspace, also bring the hovered window to the front.
+    var raiseOnHover = true
 
     // decoration
     var rounding: CGFloat = 10
@@ -159,7 +162,7 @@ final class Config {
         SettingsFile(
             gapsIn: gapsIn, gapsOut: gapsOut, borderSize: borderSize,
             activeBorderStart: activeBorder.first?.hexString, activeBorderEnd: activeBorder.last?.hexString,
-            inactiveBorder: inactiveBorder.hexString, focusFollowsMouse: focusFollowsMouse,
+            inactiveBorder: inactiveBorder.hexString, focusFollowsMouse: focusFollowsMouse, raiseOnHover: raiseOnHover,
             rounding: rounding, shadow: shadow, inactiveDim: inactiveDim, terminalOpacity: terminalOpacity,
             blur: blur, animationsEnabled: animationsEnabled, animationDuration: animationDuration,
             workspaceAnimationDuration: workspaceAnimationDuration, homepage: homepage, searchURL: searchURL,
@@ -175,6 +178,7 @@ final class Config {
            let b = f.activeBorderEnd.flatMap(NSColor.init(hexString:)) { activeBorder = [a, b] }
         if let v = f.inactiveBorder.flatMap(NSColor.init(hexString:)) { inactiveBorder = v }
         if let v = f.focusFollowsMouse { focusFollowsMouse = v }
+        if let v = f.raiseOnHover { raiseOnHover = v }
         if let v = f.rounding { rounding = CGFloat(v) }
         if let v = f.shadow { shadow = v }
         if let v = f.inactiveDim { inactiveDim = CGFloat(v) }
