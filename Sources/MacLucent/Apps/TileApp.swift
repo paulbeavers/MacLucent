@@ -22,11 +22,15 @@ protocol TileApp: AnyObject {
     func handleKey(_ event: NSEvent) -> Bool
     /// Whether closing should be confirmed (e.g. a terminal running a foreground job).
     var hasUnsavedState: Bool { get }
+    /// ⌘W: return true if the app handled it itself (e.g. closed a browser tab) and the
+    /// tile should stay open.
+    func requestClose() -> Bool
 }
 
 extension TileApp {
     func handleKey(_ event: NSEvent) -> Bool { false }
     var hasUnsavedState: Bool { false }
+    func requestClose() -> Bool { false }
 }
 
 /// Describes an app that can be launched from the launcher / keybindings.

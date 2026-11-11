@@ -126,7 +126,9 @@ final class WindowManager {
     }
 
     func closeFocused() {
-        if let w = current.focused { close(w) }
+        guard let w = current.focused else { return }
+        if w.app.requestClose() { return } // e.g. the browser closed a tab
+        close(w)
     }
 
     var allWindows: [TileWindow] { workspaces.flatMap { $0.windows } }
@@ -545,7 +547,8 @@ final class WindowManager {
             return false
         }
 
-        guard flags.contains(.command) else { return false }
+        // Non-⌘ shortcuts (e.g. ⌃Tab for browser tabs) go straight to the focused app.
+        guard flags.contains(.command) else { return current.focused?.app.handleKey(e) ?? false }
 
         if flags == .command {
             switch (code, chars) {

@@ -153,6 +153,8 @@ final class HelpOverlay: OverlayView {
         ("⌘ + / ⌘ −", "Zoom terminal / page"),
         ("⌘ L", "Browser: focus address bar"),
         ("⌘ R  ⌘ [  ⌘ ]", "Browser: reload / back / forward"),
+        ("⌘ T  ⌘ W  ⌘ ⇧ T", "Browser: new / close / reopen tab"),
+        ("⌃ Tab  ⌃ ⇧ Tab", "Browser: next / previous tab"),
         ("right-click", "Browser: Inspect Element"),
         ("drag gaps", "Resize splits with the mouse"),
         ("⌘ Q", "Quit"),

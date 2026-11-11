@@ -40,12 +40,16 @@ for a regular window, or `--borderless` to cover the current Space without a ful
 | ⌘ + / ⌘ − / ⌘ 0 | Zoom terminal font / browser page |
 | ⌘ K | Clear terminal |
 | ⌘ L, ⌘ R, ⌘ [, ⌘ ] | Browser: address bar, reload, back, forward |
+| ⌘ T, ⌘ W, ⌘ ⇧ T | Browser: new tab, close tab (last tab closes the tile), reopen closed tab |
+| ⌃ Tab / ⌃ ⇧ Tab, ⌘ ⇧ ] / ⌘ ⇧ [ | Browser: next / previous tab |
 | ⌃ ⌘ F | Toggle macOS full screen |
 | ⌘ Q | Quit |
 
-Browser windows have the WebKit inspector enabled (right-click → Inspect Element).
-`localhost` and plain-http dev servers load fine. Links that open a new window
-(`target=_blank`, `window.open`) open as a new tile.
+Browser windows have tabs (all sharing one cookie store, so you stay signed in across them)
+and the WebKit inspector (right-click → Inspect Element). `localhost` and plain-http dev
+servers load fine. Links that open a new window (`target=_blank`, `window.open`) open as a
+new tab; ⌘-click or middle-click opens a link in a background tab. Middle-click a tab or
+click its × to close it; double-click empty tab-bar space for a new tab.
 
 ## Architecture
 
@@ -62,7 +66,7 @@ Sources/MacLucent/
     TileApp.swift       the protocol every app implements + AppRegistry
     TerminalApp.swift   SwiftTerm terminal running bash
     StatsApp.swift      live stats dashboard (SystemStats.swift samples the numbers)
-    BrowserApp.swift    WKWebView browser with address bar
+    BrowserApp.swift    tabbed WKWebView browser with address bar
   UI/
     DesktopView.swift   wallpaper, stage, overlay host
     BarView.swift       waybar-style top bar
