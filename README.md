@@ -120,8 +120,12 @@ Apps can read `Config.shared` and observe `.configDidChange` to react to setting
 ### Customising
 
 - Wallpaper: choose one in Settings, or put an image at `~/.config/mac-lucent/wallpaper.png`.
-- Fonts: the terminal uses the first installed of JetBrainsMono Nerd Font, MesloLGS NF,
-  FiraCode Nerd Font, SF Mono, Menlo.
+- Fonts: mac-lucent ships with **JetBrains Mono**, **JetBrainsMono Nerd Font Mono** (with the
+  icon glyphs prompt themes like Starship/Powerlevel use), **Fira Code**, **Cascadia Code** and
+  **Hack** (in `Resources/Fonts`, registered for the app only — nothing is installed system-wide;
+  each family's license is alongside it: SIL OFL 1.1, or MIT for Hack / Nerd Fonts patches).
+  Pick one in Settings → Terminal → Font; "Automatic" uses JetBrainsMono Nerd Font Mono. Any
+  monospaced font installed on the Mac is listed too.
 - Shell: uses Homebrew bash (`/opt/homebrew/bin/bash`) if installed, otherwise `/bin/bash`.
 
 ### Performance notes

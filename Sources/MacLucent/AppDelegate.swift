@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private(set) var manager: WindowManager!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        BundledFonts.register() // before any terminal picks its font
         Config.shared.load()
         NSApp.applicationIconImage = AppIcon.image(size: 512)
         NSApp.mainMenu = buildMenu()

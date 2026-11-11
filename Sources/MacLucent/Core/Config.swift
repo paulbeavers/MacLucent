@@ -119,7 +119,8 @@ final class Config {
     var terminalFontSize: CGFloat = 13
     /// User-chosen terminal font family; nil picks the first installed of `terminalFontNames`.
     var terminalFontFamily: String?
-    var terminalFontNames = ["JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "JetBrains Mono",
+    /// "Automatic" picks the first available; the first ones are bundled with the app.
+    var terminalFontNames = ["JetBrainsMono Nerd Font Mono", "JetBrains Mono", "JetBrainsMono Nerd Font",
                              "MesloLGS NF", "FiraCode Nerd Font Mono", "SF Mono", "Menlo"]
     /// Optional wallpaper image; falls back to the built-in gradient when nil or missing.
     var wallpaperPath: String? = {
@@ -148,7 +149,9 @@ final class Config {
             return f
         }
         for name in terminalFontNames {
-            if let f = NSFont(name: name, size: s) { return f }
+            if let f = NSFontManager.shared.font(withFamily: name, traits: [], weight: 5, size: s) ?? NSFont(name: name, size: s) {
+                return f
+            }
         }
         return NSFont.monospacedSystemFont(ofSize: s, weight: .regular)
     }
