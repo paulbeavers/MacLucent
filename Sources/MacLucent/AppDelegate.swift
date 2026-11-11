@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.title = "mac-lucent"
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.titlebarSeparatorStyle = .none
         window.collectionBehavior = [.fullScreenPrimary]
         window.backgroundColor = Config.shared.crust
         window.appearance = NSAppearance(named: .darkAqua)
@@ -123,8 +124,81 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         manager.allWindows.forEach { $0.app.shutdown() }
     }
 
-    func windowDidEnterFullScreen(_ notification: Notification) { desktop.needsLayout = true }
-    func windowDidExitFullScreen(_ notification: Notification) { desktop.needsLayout = true }
+    func windowDidEnterFullScreen(_ notification: Notification) {
+        observeTitlebarWindows()
+        setTitlebarHidden(true)
+        desktop.needsLayout = true
+    }
+
+    func windowWillExitFullScreen(_ notification: Notification) {
+        setTitlebarHidden(false)
+    }
+
+    func windowDidExitFullScreen(_ notification: Notification) {
+        setTitlebarHidden(false)
+        desktop.needsLayout = true
+    }
+
+    /// In native full screen, moving the pointer to the top reveals the menu bar *and* the
+    /// window's title bar (traffic lights) under it. We only want the menu bar, so hide the
+    /// title-bar container while in full screen and bring it back when leaving.
+    ///
+    /// AppKit moves the title bar into a separate window (NSToolbarFullScreenWindow) that slides
+    /// down with the menu bar; that window's edge/shadow shows as a faint line even when its
+    /// contents are hidden, so we make it fully transparent too — when entering full screen and
+    /// again whenever it moves (it is created/moved lazily on the first reveal).
+    private func setTitlebarHidden(_ hidden: Bool) {
+        if let container = window.standardWindowButton(.closeButton)?.superview?.superview {
+            container.isHidden = hidden
+            container.alphaValue = hidden ? 0 : 1
+        }
+        for w in NSApp.windows where w !== window && Self.isFullScreenTitlebarWindow(w) {
+            w.hasShadow = !hidden
+            w.alphaValue = hidden ? 0 : 1
+        }
+        logWindows(hidden ? "hide" : "show")
+    }
+
+    private static func isFullScreenTitlebarWindow(_ w: NSWindow) -> Bool {
+        let name = NSStringFromClass(type(of: w))
+        return name.contains("FullScreen") || name.contains("Titlebar")
+    }
+
+    private var observingTitlebarWindows = false
+
+    private func observeTitlebarWindows() {
+        guard !observingTitlebarWindows else { return }
+        observingTitlebarWindows = true
+        for name in [NSWindow.didMoveNotification, NSWindow.didResizeNotification, NSWindow.didUpdateNotification] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] n in
+                MainActor.assumeIsolated {
+                    guard let self, let w = n.object as? NSWindow, w !== self.window,
+                          self.window.styleMask.contains(.fullScreen), Self.isFullScreenTitlebarWindow(w),
+                          w.alphaValue != 0 || w.hasShadow else { return }
+                    w.hasShadow = false
+                    w.alphaValue = 0
+                    if let container = self.window.standardWindowButton(.closeButton)?.superview?.superview {
+                        container.isHidden = true
+                    }
+                    self.logWindows("hid \(NSStringFromClass(type(of: w)))")
+                }
+            }
+        }
+    }
+
+    /// Debug aid: `ML_WINDOW_LOG=1` records our windows to ~/Library/Logs/mac-lucent/windows.log.
+    private func logWindows(_ event: String) {
+        guard ProcessInfo.processInfo.environment["ML_WINDOW_LOG"] != nil else { return }
+        let dir = NSHomeDirectory() + "/Library/Logs/mac-lucent"
+        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        let path = dir + "/windows.log"
+        if !FileManager.default.fileExists(atPath: path) { FileManager.default.createFile(atPath: path, contents: nil) }
+        var text = "== \(event)\n"
+        for w in NSApp.windows {
+            text += "  \(NSStringFromClass(type(of: w))) frame=\(w.frame) level=\(w.level.rawValue) alpha=\(w.alphaValue) shadow=\(w.hasShadow) visible=\(w.isVisible)\n"
+        }
+        if let h = FileHandle(forWritingAtPath: path) { h.seekToEndOfFile(); h.write(text.data(using: .utf8)!); h.closeFile() }
+    }
 
     // MARK: Menu
 
