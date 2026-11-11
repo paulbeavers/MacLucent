@@ -64,11 +64,16 @@ final class WindowManager {
 
     func launch(_ id: String) {
         guard let d = AppRegistry.app(id) else { return }
+        if let action = d.action {
+            action(self)
+            return
+        }
         if d.singleInstance, let existing = allWindows.first(where: { $0.appID == id }) {
             focus(existing)
             return
         }
-        open(d.make(self)).appID = id
+        guard let make = d.make else { return }
+        open(make(self)).appID = id
     }
 
     /// A window for `app`, wired to the manager (title updates, self-close).
@@ -594,12 +599,13 @@ final class WindowManager {
         guard flags.contains(mod) else { return current.focused?.app.handleKey(e) ?? false }
 
         if flags == mod {
+            // App launch shortcuts come from the registry.
+            if let app = AppRegistry.apps.first(where: { $0.shortcut?.matches(e) == true }) {
+                launch(app.id)
+                return true
+            }
             switch (code, chars) {
             case (48, _): cycleWorkspaces(1); return true // Mod+Tab (⌘Tab belongs to macOS)
-            case (36, _), (76, _): launch("terminal"); return true
-            case (_, "b"): launch("browser"); return true
-            case (_, ","): launch("settings"); return true
-            case (_, "i"): launch("stats"); return true
             case (_, "d"): showLauncher(); return true
             case (_, "w"): closeFocused(); return true
             case (_, "f"): toggleFullscreen(); return true

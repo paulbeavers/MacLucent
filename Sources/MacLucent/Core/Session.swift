@@ -16,11 +16,23 @@ struct SessionFile: Codable {
     }
 
     struct WindowState: Codable {
-        var kind: String              // "terminal", "browser", "settings", "stats"
-        var directory: String?        // terminal
-        var tabs: [String]?           // browser
-        var activeTab: Int?           // browser
+        var kind: String              // the app's AppRegistry id
+        var state: JSONValue?         // the app's `sessionState`
         var floatFrame: [Double]?     // x, y, width, height (workspace coordinates)
+        // Format before apps saved their own state (read-only, for older session files).
+        var directory: String?
+        var tabs: [String]?
+        var activeTab: Int?
+
+        /// `state`, or the equivalent built from the old per-app fields.
+        var resolvedState: JSONValue {
+            if let state { return state }
+            var o: [String: JSONValue] = [:]
+            if let directory { o["directory"] = .string(directory) }
+            if let tabs { o["tabs"] = .array(tabs.map { .string($0) }) }
+            if let activeTab { o["activeTab"] = .number(Double(activeTab)) }
+            return .object(o)
+        }
     }
 
     indirect enum Node: Codable {
@@ -76,21 +88,10 @@ extension WindowManager {
         return SessionFile(currentWorkspace: current.index, workspaces: states)
     }
 
+    /// Only windows launched from the registry, whose app agrees to be saved, are saved.
     private func windowState(_ w: TileWindow) -> SessionFile.WindowState? {
-        var s: SessionFile.WindowState
-        switch w.app {
-        case let t as TerminalApp:
-            s = .init(kind: "terminal", directory: t.currentDirectory)
-        case let b as BrowserApp:
-            let urls = b.tabs.map { $0.displayURL?.absoluteString ?? "" }
-            s = .init(kind: "browser", tabs: urls, activeTab: b.activeIndex)
-        case is SettingsApp:
-            s = .init(kind: "settings")
-        case is StatsApp:
-            s = .init(kind: "stats")
-        default:
-            return nil
-        }
+        guard let id = w.appID, AppRegistry.app(id) != nil, let state = w.app.sessionState else { return nil }
+        var s = SessionFile.WindowState(kind: id, state: state)
         if let f = w.floatFrame { s.floatFrame = [f.minX, f.minY, f.width, f.height] }
         return s
     }
@@ -117,8 +118,8 @@ extension WindowManager {
             guard let ws = workspaces.first(where: { $0.index == state.index }), ws.isEmpty, let layout = state.layout else { continue }
             var tiles: [Int: TileWindow] = [:]
             for (i, ws_) in state.windows.enumerated() {
-                guard let (app, id) = makeApp(ws_) else { continue }
-                let tile = adoptRestoredTile(app, appID: id, in: ws)
+                guard let d = AppRegistry.app(ws_.kind), let app = d.restoreApp(self, ws_.resolvedState) else { continue }
+                let tile = adoptRestoredTile(app, appID: d.id, in: ws)
                 if let f = ws_.floatFrame, f.count == 4 { tile.floatFrame = CGRect(x: f[0], y: f[1], width: f[2], height: f[3]) }
                 tiles[i] = tile
             }
@@ -148,21 +149,5 @@ extension WindowManager {
         guard restoredAny else { return false }
         finishRestore(currentWorkspace: session.currentWorkspace)
         return true
-    }
-
-    private func makeApp(_ s: SessionFile.WindowState) -> (TileApp, String)? {
-        switch s.kind {
-        case "terminal":
-            return (TerminalApp(directory: s.directory), "terminal")
-        case "browser":
-            let urls = (s.tabs ?? []).filter { !$0.isEmpty }
-            return (BrowserApp(manager: self, urls: urls, activeTab: s.activeTab ?? 0), "browser")
-        case "settings":
-            return (SettingsApp(), "settings")
-        case "stats":
-            return (StatsApp(manager: self), "stats")
-        default:
-            return nil
-        }
     }
 }

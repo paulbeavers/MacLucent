@@ -103,7 +103,7 @@ final class LauncherRow: NSView {
         icon.symbolConfiguration = .init(pointSize: 15, weight: .medium)
         name.stringValue = app.name
         name.font = c.uiFont(14, weight: .medium)
-        shortcut.stringValue = Config.shared.shortcut(app.shortcut)
+        shortcut.stringValue = app.shortcutLabel
         shortcut.font = c.monoUIFont(12, weight: .medium)
         shortcut.textColor = c.overlay0
         [icon, name, shortcut].forEach(addSubview)
@@ -134,11 +134,7 @@ final class LauncherRow: NSView {
 /// Keybinding cheat sheet.
 final class HelpOverlay: OverlayView {
     static let bindings: [(String, String)] = [
-        ("⌘ ↩", "New terminal"),
-        ("⌘ B", "New browser"),
         ("⌘ D", "App launcher"),
-        ("⌘ ,", "Settings"),
-        ("⌘ I", "Stats"),
         ("⌘ W", "Close window"),
         ("⌘ ←↑↓→", "Move focus"),
         ("⌘ ⇧ ←↑↓→", "Swap window (floating: move)"),
@@ -162,7 +158,8 @@ final class HelpOverlay: OverlayView {
     ]
 
     private let label = NSTextField(labelWithString: "")
-    override var panelSize: NSSize { NSSize(width: 440, height: CGFloat(Self.bindings.count) * 22 + 70) }
+    private var rowCount = 0
+    override var panelSize: NSSize { NSSize(width: 500, height: CGFloat(rowCount) * 22.5 + 70) }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -172,9 +169,12 @@ final class HelpOverlay: OverlayView {
         let tab = NSMutableParagraphStyle()
         tab.tabStops = [NSTextTab(textAlignment: .left, location: 150)]
         tab.lineSpacing = 5
-        for (k, v) in Self.bindings {
+        // App shortcuts come from the registry, then the window-manager bindings.
+        let appRows = AppRegistry.apps.compactMap { d in d.shortcut.map { ("⌘ \($0.label)", "Open \(d.name)") } }
+        for (k, v) in appRows + Self.bindings {
             // ⌘Tab is macOS's app switcher, so workspace cycling only exists with the ⌥ modifier.
             if k.contains("Tab"), k.hasPrefix("⌘"), c.modifierKey == .command { continue }
+            rowCount += 1
             // Standard macOS shortcuts stay on ⌘; everything else uses the configured modifier.
             let fixed = k == "⌘ Q" || k.hasPrefix("⌘ ⌥")
             let keys = fixed ? k : c.shortcut(k)

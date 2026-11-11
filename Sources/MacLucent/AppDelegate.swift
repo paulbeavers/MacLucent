@@ -226,7 +226,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         appMenu.addItem(withTitle: "About mac-lucent", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(item("Settings…", #selector(openSettings), ","))
-        appMenu.addItem(item("Stats", #selector(openStats), "i"))
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Hide mac-lucent", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         let others = appMenu.addItem(withTitle: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
@@ -236,8 +235,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         main.addItem(submenu(appMenu, title: "mac-lucent"))
 
         let file = NSMenu(title: "File")
-        file.addItem(item("New Terminal", #selector(newTerminal), "\r"))
-        file.addItem(item("New Browser", #selector(newBrowser), "b"))
+        // One entry per registered app (Settings… lives in the app menu, as on macOS).
+        for d in AppRegistry.apps where d.id != "settings" && (d.make != nil || d.action != nil) {
+            let title = d.singleInstance || d.action != nil ? d.name : "New \(d.name)"
+            let i = item(title, #selector(launchFromMenu(_:)), d.shortcut?.keyEquivalent ?? "")
+            i.representedObject = d.id
+            file.addItem(i)
+        }
+        file.addItem(.separator())
         file.addItem(item("Launcher…", #selector(showLauncher), "d"))
         main.addItem(submenu(file, title: "File"))
 
@@ -277,11 +282,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return i
     }
 
-    @objc private func newTerminal() { manager.launch("terminal") }
-    @objc private func newBrowser() { manager.launch("browser") }
+    @objc private func launchFromMenu(_ sender: NSMenuItem) {
+        if let id = sender.representedObject as? String { manager.launch(id) }
+    }
     @objc private func showLauncher() { manager.showLauncher() }
     @objc private func openSettings() { manager.launch("settings") }
-    @objc private func openStats() { manager.launch("stats") }
     @objc private func showHelp() { desktop.showOverlay(HelpOverlay()) }
 }
 

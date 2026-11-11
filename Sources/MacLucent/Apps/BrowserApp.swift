@@ -367,6 +367,11 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         tabs.removeAll()
     }
 
+    var sessionState: JSONValue? {
+        let urls = tabs.compactMap { $0.displayURL?.absoluteString }.filter { !$0.isEmpty }
+        return .object(["tabs": .array(urls.map { .string($0) }), "activeTab": .number(Double(activeIndex))])
+    }
+
     /// ⌘W closes the current tab; the tile closes with its last tab.
     func requestClose() -> Bool {
         guard tabs.count > 1 else { return false }

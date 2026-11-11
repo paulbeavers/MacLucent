@@ -85,7 +85,10 @@ final class WorkspaceView: NSView {
         let s = NSMutableAttributedString()
         s.append(NSAttributedString(string: "mac-lucent\n", attributes: [
             .font: NSFont.systemFont(ofSize: 34, weight: .ultraLight), .foregroundColor: c.text.withAlphaComponent(0.55), .paragraphStyle: para]))
-        let rows = [("⌘ ↩", "terminal"), ("⌘ B", "browser"), ("⌘ D", "launcher"), ("⌘ /", "keybindings")]
+        // The first couple of apps with shortcuts (from the registry), then the launcher and help.
+        let apps = AppRegistry.apps.filter { $0.shortcut != nil && !$0.singleInstance }.prefix(2)
+            .map { ("⌘ \($0.shortcut!.label)", $0.name.lowercased()) }
+        let rows = Array(apps) + [("⌘ D", "launcher"), ("⌘ /", "keybindings")]
         for (k, v) in rows {
             s.append(NSAttributedString(string: "\(c.shortcut(k))  ", attributes: [
                 .font: c.monoUIFont(13, weight: .semibold), .foregroundColor: c.accent.withAlphaComponent(0.8), .paragraphStyle: para]))

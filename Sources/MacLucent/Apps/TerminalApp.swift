@@ -93,6 +93,10 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
         terminal.window?.makeFirstResponder(terminal)
     }
 
+    var sessionState: JSONValue? {
+        .object(currentDirectory.map { ["directory": .string($0)] } ?? [:])
+    }
+
     func shutdown() {
         terminal.processDelegate = nil
         terminal.terminate()

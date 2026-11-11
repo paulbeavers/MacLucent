@@ -120,11 +120,24 @@ isn't included in the mac-lucent figures.
 
 ### Adding a new app
 
-1. Create a class conforming to `TileApp` (provide a `view`, `title`, `symbolName`, `focus()`, `shutdown()`).
-2. Register it in `AppRegistry.apps` in `Apps/TileApp.swift`.
+An app is **one file plus one registry entry** — no other framework code changes.
 
-It then shows up in the launcher (⌘ D) and tiles like any other window. Set `singleInstance: true`
-on its `AppDescriptor` to focus the existing window instead of opening another (as Settings does).
+1. Create a class conforming to `TileApp` (`Apps/TileApp.swift`): provide `view`, `title`,
+   `symbolName`, `focus()` and `shutdown()`. Optional hooks: `handleKey` (app shortcuts),
+   `requestClose` (custom ⌘W, e.g. closing a tab), and `sessionState` (a `JSONValue` to save;
+   return nil to opt out of session restore).
+2. Add an `AppDescriptor` to `AppRegistry.apps`:
+
+   ```swift
+   AppDescriptor(id: "notes", name: "Notes", symbolName: "note.text", shortcut: .key("N"),
+                 make: { _ in NotesApp() },
+                 restore: { _, state in NotesApp(text: state["text"]?.string ?? "") })
+   ```
+
+From the descriptor the app automatically gets: a launcher entry, its keyboard shortcut (with the
+⌘/⌥ modifier), a row in the ⌘/ help sheet and the File menu, single-instance behaviour
+(`singleInstance: true`), counting in Stats, and session restore (`restore` defaults to `make`).
+Shortcuts must not clash with the window-manager keys (D, W, F, J, Tab, digits, arrows).
 Apps can read `Config.shared` and observe `.configDidChange` to react to settings changes.
 
 ### Customising

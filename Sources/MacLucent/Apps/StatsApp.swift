@@ -122,7 +122,7 @@ final class StatsApp: NSObject, TileApp {
 
         let windows = manager?.allWindows ?? []
         var kinds: [String: Int] = [:]
-        for w in windows { kinds[Self.kind(of: w.app), default: 0] += 1 }
+        for w in windows { kinds[Self.kind(of: w), default: 0] += 1 }
         let kindText = kinds.sorted { $0.value > $1.value }.map { "\($0.value) \($0.key)" }.joined(separator: " · ")
         windowsTile.set(value: "\(windows.count)", detail: kindText.isEmpty ? "none" : kindText, series: [])
 
@@ -136,7 +136,7 @@ final class StatsApp: NSObject, TileApp {
         guard let wm = manager else { return }
         let rows = wm.workspaces.filter { !$0.isEmpty || $0 === wm.current }.map { ws -> [String] in
             var kinds: [String: Int] = [:]
-            for w in ws.windows { kinds[Self.kind(of: w.app), default: 0] += 1 }
+            for w in ws.windows { kinds[Self.kind(of: w), default: 0] += 1 }
             let detail = kinds.sorted { $0.key < $1.key }.map { "\($0.value) \($0.key)" }.joined(separator: ", ")
             let mode = ws.fullscreen != nil ? "fullscreen" : (ws.mode == .floating ? "floating" : "tiled")
             return ["\(ws.index)\(ws === wm.current ? "  •" : "")", mode, "\(ws.windows.count)", detail.isEmpty ? "empty" : detail]
@@ -257,14 +257,9 @@ final class StatsApp: NSObject, TileApp {
         return "\(s)s"
     }
 
-    static func kind(of app: TileApp) -> String {
-        switch app {
-        case is TerminalApp: return "terminal"
-        case is BrowserApp: return "browser"
-        case is SettingsApp: return "settings"
-        case is StatsApp: return "stats"
-        default: return "other"
-        }
+    /// Windows are grouped by their registry app's name ("terminal", "browser", …).
+    static func kind(of w: TileWindow) -> String {
+        AppRegistry.app(w.appID)?.name.lowercased() ?? "other"
     }
 }
 
