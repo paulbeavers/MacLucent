@@ -103,7 +103,7 @@ final class LauncherRow: NSView {
         icon.symbolConfiguration = .init(pointSize: 15, weight: .medium)
         name.stringValue = app.name
         name.font = c.uiFont(14, weight: .medium)
-        shortcut.stringValue = app.shortcut
+        shortcut.stringValue = Config.shared.shortcut(app.shortcut)
         shortcut.font = c.monoUIFont(12, weight: .medium)
         shortcut.textColor = c.overlay0
         [icon, name, shortcut].forEach(addSubview)
@@ -150,6 +150,7 @@ final class HelpOverlay: OverlayView {
         ("⌘ 1–9", "Switch workspace"),
         ("⌘ ⇧ 1–9", "Move window to workspace"),
         ("⌘ ⌥ ←/→", "Previous / next workspace"),
+        ("⌘ Tab  ⌘ ⇧ Tab", "Next / previous workspace in use"),
         ("⌘ + / ⌘ −", "Zoom terminal / page"),
         ("⌘ L", "Browser: focus address bar"),
         ("⌘ R  ⌘ [  ⌘ ]", "Browser: reload / back / forward"),
@@ -172,7 +173,13 @@ final class HelpOverlay: OverlayView {
         tab.tabStops = [NSTextTab(textAlignment: .left, location: 150)]
         tab.lineSpacing = 5
         for (k, v) in Self.bindings {
-            s.append(NSAttributedString(string: "\(k)\t", attributes: [
+            // ⌘Tab is macOS's app switcher, so workspace cycling only exists with the ⌥ modifier.
+            if k.contains("Tab"), k.hasPrefix("⌘"), c.modifierKey == .command { continue }
+            // Standard macOS shortcuts stay on ⌘; everything else uses the configured modifier.
+            let fixed = k == "⌘ Q" || k.hasPrefix("⌘ ⌥")
+            let keys = fixed ? k : c.shortcut(k)
+            let v = fixed ? v : c.shortcut(v)
+            s.append(NSAttributedString(string: "\(keys)\t", attributes: [
                 .font: c.monoUIFont(12, weight: .semibold), .foregroundColor: c.accent, .paragraphStyle: tab]))
             s.append(NSAttributedString(string: "\(v)\n", attributes: [
                 .font: c.uiFont(12.5, weight: .regular), .foregroundColor: c.subtext, .paragraphStyle: tab]))

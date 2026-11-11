@@ -3,6 +3,7 @@ import AppKit
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow!
+    private var menuModifier = Config.shared.modifierKey
     private var desktop: DesktopView!
     private(set) var manager: WindowManager!
 
@@ -10,6 +11,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         Config.shared.load()
         NSApp.applicationIconImage = AppIcon.image(size: 512)
         NSApp.mainMenu = buildMenu()
+        NotificationCenter.default.addObserver(forName: .configDidChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, Config.shared.modifierKey != self.menuModifier else { return }
+                self.menuModifier = Config.shared.modifierKey
+                NSApp.mainMenu = self.buildMenu() // shortcuts follow the modifier key
+            }
+        }
 
         let screen = NSScreen.main ?? NSScreen.screens[0]
         let args = CommandLine.arguments
@@ -252,8 +260,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return i
     }
 
+    /// A mac-lucent menu item; its shortcut uses the configured modifier key (⌘ or ⌥).
     private func item(_ title: String, _ action: Selector, _ key: String) -> NSMenuItem {
         let i = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        i.keyEquivalentModifierMask = Config.shared.mod
         i.target = self
         return i
     }

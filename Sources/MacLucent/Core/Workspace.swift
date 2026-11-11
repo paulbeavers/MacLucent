@@ -65,6 +65,19 @@ final class WorkspaceView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
+        buildHint()
+        hint.alignment = .center
+        addSubview(hint)
+        NotificationCenter.default.addObserver(self, selector: #selector(configChanged), name: .configDidChange, object: nil)
+    }
+
+    @objc private func configChanged() {
+        buildHint()
+        updateHint()
+    }
+
+    /// The "empty workspace" hint, showing shortcuts with the current modifier key.
+    private func buildHint() {
         let c = Config.shared
         let para = NSMutableParagraphStyle()
         para.alignment = .center
@@ -74,14 +87,12 @@ final class WorkspaceView: NSView {
             .font: NSFont.systemFont(ofSize: 34, weight: .ultraLight), .foregroundColor: c.text.withAlphaComponent(0.55), .paragraphStyle: para]))
         let rows = [("⌘ ↩", "terminal"), ("⌘ B", "browser"), ("⌘ D", "launcher"), ("⌘ /", "keybindings")]
         for (k, v) in rows {
-            s.append(NSAttributedString(string: "\(k)  ", attributes: [
+            s.append(NSAttributedString(string: "\(c.shortcut(k))  ", attributes: [
                 .font: c.monoUIFont(13, weight: .semibold), .foregroundColor: c.accent.withAlphaComponent(0.8), .paragraphStyle: para]))
             s.append(NSAttributedString(string: "\(v)\n", attributes: [
                 .font: c.uiFont(13, weight: .regular), .foregroundColor: c.subtext.withAlphaComponent(0.6), .paragraphStyle: para]))
         }
         hint.attributedStringValue = s
-        hint.alignment = .center
-        addSubview(hint)
     }
 
     required init?(coder: NSCoder) { fatalError() }

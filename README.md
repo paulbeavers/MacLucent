@@ -19,6 +19,12 @@ for a regular window, or `--borderless` to cover the current Space without a ful
 
 ## Keybindings (⌘ is the "Super" key)
 
+The modifier is configurable: Settings → General → **Modifier key** switches every mac-lucent
+shortcut below from ⌘ to ⌥ (standard macOS ones such as copy/paste, ⌘Q and ⌘⌥←/→ stay as they
+are). With ⌥, **⌥Tab / ⌥⇧Tab** cycles through the workspaces that have windows (⌘Tab can't be
+used — it belongs to macOS). Note that the terminal uses ⌥ as Meta, so ⌥ shortcuts mac-lucent
+claims (e.g. ⌥B, ⌥F, ⌥D) no longer reach the shell.
+
 | Keys | Action |
 |---|---|
 | ⌘ ↩ | New terminal (opens in the focused terminal's directory) |

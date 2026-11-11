@@ -302,6 +302,13 @@ final class WindowManager {
         return currentChanged
     }
 
+    /// Mod+Tab: step through the workspaces that have windows (plus the current one), wrapping.
+    func cycleWorkspaces(_ delta: Int) {
+        let candidates = workspaces.filter { !$0.isEmpty || $0 === current }
+        guard candidates.count > 1, let i = candidates.firstIndex(where: { $0 === current }) else { return }
+        switchTo(candidates[(i + delta + candidates.count) % candidates.count].index)
+    }
+
     func switchRelative(_ delta: Int) {
         let n = current.index + delta
         if n >= 1 && n <= workspaces.count { switchTo(n) }
@@ -490,7 +497,7 @@ final class WindowManager {
     /// Super+LMB / Super+RMB). Returns true if the event starts such a drag and should be swallowed.
     private func beginFloatingDrag(_ e: NSEvent) -> Bool {
         guard e.type == .leftMouseDown || e.type == .rightMouseDown,
-              e.modifierFlags.intersection([.command, .shift, .option, .control]) == .command,
+              e.modifierFlags.intersection([.command, .shift, .option, .control]) == config.mod,
               desktop.overlay == nil, current.mode == .floating, current.fullscreen == nil,
               let w = window(at: e) else { return false }
         if w !== current.focused { focus(w) }
@@ -538,20 +545,23 @@ final class WindowManager {
         let flags = e.modifierFlags.intersection([.command, .shift, .option, .control])
         let chars = e.charactersIgnoringModifiers?.lowercased() ?? ""
         let code = e.keyCode
+        let mod = config.mod
 
         if desktop.overlay != nil {
-            if flags == .command && (chars == "d" || chars == "/") || code == 53 {
+            if flags == mod && (chars == "d" || chars == "/") || code == 53 {
                 desktop.dismissOverlay()
                 return true
             }
             return false
         }
 
-        // Non-⌘ shortcuts (e.g. ⌃Tab for browser tabs) go straight to the focused app.
-        guard flags.contains(.command) else { return current.focused?.app.handleKey(e) ?? false }
+        // Shortcuts without the mac-lucent modifier (e.g. ⌃Tab for browser tabs, or ⌘ shortcuts
+        // when the modifier is ⌥) go straight to the focused app.
+        guard flags.contains(mod) else { return current.focused?.app.handleKey(e) ?? false }
 
-        if flags == .command {
+        if flags == mod {
             switch (code, chars) {
+            case (48, _): cycleWorkspaces(1); return true // Mod+Tab (⌘Tab belongs to macOS)
             case (36, _), (76, _): launch("terminal"); return true
             case (_, "b"): launch("browser"); return true
             case (_, ","): launch("settings"); return true
@@ -566,12 +576,13 @@ final class WindowManager {
             if let n = Self.digitKeys[code] { switchTo(n); return true }
             if let d = Self.arrowKeys[code] { focus(d); return true }
         }
-        if flags == [.command, .shift] {
+        if flags == [mod, .shift] {
+            if code == 48 { cycleWorkspaces(-1); return true }
             if chars == "f" { toggleFloating(); return true }
             if let n = Self.digitKeys[code] { moveFocused(to: n); return true }
             if let d = Self.arrowKeys[code] { swap(d); return true }
         }
-        if flags == [.command, .control], let d = Self.arrowKeys[code] {
+        if flags == [mod, .control], let d = Self.arrowKeys[code] {
             resize(d); return true
         }
         if flags == [.command, .option], let d = Self.arrowKeys[code] {

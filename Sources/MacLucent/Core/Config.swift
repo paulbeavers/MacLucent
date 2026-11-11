@@ -33,6 +33,11 @@ extension NSColor {
     }
 }
 
+/// The modifier used for mac-lucent's shortcuts (Hyprland's "Super").
+enum ModifierKey: String {
+    case command, option
+}
+
 /// The user-editable subset of `Config`, as stored in ~/.config/mac-lucent/settings.json.
 /// Every field is optional so older or hand-edited files still load.
 struct SettingsFile: Codable {
@@ -58,6 +63,7 @@ struct SettingsFile: Codable {
     var terminalFontFamily: String?
     var wallpaperPath: String?
     var floatingWorkspaces: [Int]?
+    var modifierKey: String?
 }
 
 /// Runtime configuration, modelled on hyprland.conf's `general`, `decoration` and
@@ -73,6 +79,13 @@ final class Config {
     var activeBorder: [NSColor] = [NSColor(hex: 0x33CCFF, alpha: 0.93), NSColor(hex: 0x00FF99, alpha: 0.93)]
     var inactiveBorder = NSColor(hex: 0x595959, alpha: 0.67)
     var focusFollowsMouse = false
+    /// ⌘ (default) or ⌥ for all mac-lucent shortcuts. Standard macOS ones (copy/paste, quit) stay on ⌘.
+    var modifierKey: ModifierKey = .command
+    var mod: NSEvent.ModifierFlags { modifierKey == .option ? .option : .command }
+    var modSymbol: String { modifierKey == .option ? "⌥" : "⌘" }
+
+    /// Render a shortcut written with "⌘" for the mac-lucent modifier, using the current one.
+    func shortcut(_ s: String) -> String { s.replacingOccurrences(of: "⌘", with: modSymbol) }
     /// With focus-follows-mouse on a floating workspace, also bring the hovered window to the front.
     var raiseOnHover = true
 
@@ -167,7 +180,8 @@ final class Config {
             blur: blur, animationsEnabled: animationsEnabled, animationDuration: animationDuration,
             workspaceAnimationDuration: workspaceAnimationDuration, homepage: homepage, searchURL: searchURL,
             terminalFontSize: terminalFontSize, terminalFontFamily: terminalFontFamily ?? "",
-            wallpaperPath: wallpaperPath ?? "", floatingWorkspaces: floatingWorkspaces.sorted())
+            wallpaperPath: wallpaperPath ?? "", floatingWorkspaces: floatingWorkspaces.sorted(),
+            modifierKey: modifierKey.rawValue)
     }
 
     func apply(_ f: SettingsFile) {
@@ -193,6 +207,7 @@ final class Config {
         if let v = f.terminalFontFamily { terminalFontFamily = v.isEmpty ? nil : v }
         if let v = f.wallpaperPath { wallpaperPath = v.isEmpty ? nil : v }
         if let v = f.floatingWorkspaces { floatingWorkspaces = Set(v) }
+        if let v = f.modifierKey.flatMap(ModifierKey.init(rawValue:)) { modifierKey = v }
     }
 
     /// Load saved settings, if any. Call once at launch, before any views are built.

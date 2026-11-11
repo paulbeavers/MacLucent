@@ -100,7 +100,8 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
 
     func handleKey(_ e: NSEvent) -> Bool {
         let flags = e.modifierFlags.intersection([.command, .shift, .option, .control])
-        guard flags == .command || flags == [.command, .shift] else { return false }
+        let mod = Config.shared.mod
+        guard flags == mod || flags == [mod, .shift] else { return false }
         switch e.charactersIgnoringModifiers {
         case "=", "+": setZoom(zoom + 1)
         case "-", "_": setZoom(zoom - 1)

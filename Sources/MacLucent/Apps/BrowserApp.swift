@@ -374,7 +374,8 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         // ⌃Tab / ⌃⇧Tab: next / previous tab.
         if code == 48, flags == .control { cycleTab(1); return true }
         if code == 48, flags == [.control, .shift] { cycleTab(-1); return true }
-        if flags == .command {
+        let mod = Config.shared.mod
+        if flags == mod {
             switch ch {
             case "t": newTab(focusAddressBar: true)
             case "l": webView.window?.makeFirstResponder(urlField); urlField.selectText(nil)
@@ -388,7 +389,7 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
             }
             return true
         }
-        if flags == [.command, .shift] {
+        if flags == [mod, .shift] {
             switch (code, ch) {
             case (_, "t"): reopenClosedTab()
             case (_, "r"): reloadActive(fromOrigin: true)

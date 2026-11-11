@@ -43,6 +43,9 @@ final class SettingsApp: NSObject, TileApp {
         slider("Inner gaps", 0...30, step: 1, fmt: "%.0f px", get: { Double(self.c.gapsIn) }, set: { self.c.gapsIn = CGFloat($0) })
         slider("Outer gaps", 0...60, step: 1, fmt: "%.0f px", get: { Double(self.c.gapsOut) }, set: { self.c.gapsOut = CGFloat($0) })
         slider("Border size", 0...8, step: 1, fmt: "%.0f px", get: { Double(self.c.borderSize) }, set: { self.c.borderSize = CGFloat($0) })
+        popup("Modifier key", options: ["Command (⌘)", "Option (⌥)"],
+              get: { self.c.modifierKey == .option ? "Option (⌥)" : "Command (⌘)" },
+              set: { self.c.modifierKey = $0.hasPrefix("Option") ? .option : .command })
         toggle("Focus follows mouse", get: { self.c.focusFollowsMouse }, set: { self.c.focusFollowsMouse = $0 })
         toggle("Raise on hover", note: "Floating workspaces: hovered window comes to the front",
                get: { self.c.raiseOnHover }, set: { self.c.raiseOnHover = $0 })
@@ -218,7 +221,7 @@ final class SettingsApp: NSObject, TileApp {
             self.changed()
         }
         refreshers.append(sync)
-        row("Floating", note: "Selected workspaces float · ⌘⇧F toggles the current one",
+        row("Floating", note: "Selected workspaces float · \(c.shortcut("⌘⇧F")) toggles the current one",
             control: seg, controlWidth: CGFloat(count) * 27 + 6)
     }
 
