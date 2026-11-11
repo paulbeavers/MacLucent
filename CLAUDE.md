@@ -110,7 +110,7 @@ Logs go to `~/Library/Logs/Lucent/`.
 
 ## Parked work and ideas
 
-- **Branch `native-apps-wip` (local only, not pushed):** tiling real Mac app windows via the
+- **Branch `native-apps-wip` (pushed to origin):** tiling real Mac app windows via the
   Accessibility API (yabai/AeroSpace approach: position real windows over tiles, park off-screen
   per workspace, CGEvent tap for global hotkeys, backdrop window level). Paused — Dock pop-up and
   window sizing issues; user said "more than I want to deal with now". True embedding of other
