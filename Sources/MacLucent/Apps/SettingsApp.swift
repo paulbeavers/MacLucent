@@ -45,6 +45,9 @@ final class SettingsApp: NSObject, TileApp {
         slider("Border size", 0...8, step: 1, fmt: "%.0f px", get: { Double(self.c.borderSize) }, set: { self.c.borderSize = CGFloat($0) })
         toggle("Focus follows mouse", get: { self.c.focusFollowsMouse }, set: { self.c.focusFollowsMouse = $0 })
 
+        header("Workspaces", "Floating workspaces let windows overlap and be moved freely")
+        workspaceModes()
+
         header("Decoration", "Window shape, shadow and transparency")
         slider("Rounding", 0...24, step: 1, fmt: "%.0f px", get: { Double(self.c.rounding) }, set: { self.c.rounding = CGFloat($0) })
         toggle("Drop shadow", get: { self.c.shadow }, set: { self.c.shadow = $0 })
@@ -196,6 +199,25 @@ final class SettingsApp: NSObject, TileApp {
         bind(f) { [weak self] in set(f.stringValue); self?.changed() }
         refreshers.append { f.stringValue = get() }
         row(title, note: note, control: f, controlWidth: 320)
+    }
+
+    private func workspaceModes() {
+        let count = c.workspaceCount
+        let seg = NSSegmentedControl(labels: (1...count).map(String.init), trackingMode: .selectAny, target: nil, action: nil)
+        for i in 0..<count { seg.setWidth(26, forSegment: i) }
+        let sync = { [weak self] in
+            guard let self else { return }
+            for i in 0..<count { seg.setSelected(self.c.floatingWorkspaces.contains(i + 1), forSegment: i) }
+        }
+        sync()
+        bind(seg) { [weak self] in
+            guard let self else { return }
+            self.c.floatingWorkspaces = Set((0..<count).filter { seg.isSelected(forSegment: $0) }.map { $0 + 1 })
+            self.changed()
+        }
+        refreshers.append(sync)
+        row("Floating", note: "Selected workspaces float · ⌘⇧F toggles the current one",
+            control: seg, controlWidth: CGFloat(count) * 27 + 6)
     }
 
     private func wallpaperRow() {

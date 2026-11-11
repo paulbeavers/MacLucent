@@ -1,8 +1,16 @@
 import AppKit
 
+enum LayoutMode {
+    case tiled
+    /// Windows keep their own frames and may overlap; the tiling tree is kept so switching
+    /// back to tiled restores the previous arrangement.
+    case floating
+}
+
 @MainActor
 final class Workspace {
     let index: Int
+    var mode: LayoutMode = .tiled
     let tree = LayoutTree()
     let view: WorkspaceView
     var focused: TileWindow?
@@ -38,6 +46,18 @@ final class WorkspaceView: NSView {
     weak var workspace: Workspace?
     var onLayoutChange: (() -> Void)?
     private var dragging: Divider?
+    private var edgeDrag: EdgeDrag?
+    /// Called when a floating window starts being resized from its edge.
+    var onFloatingEdgeDrag: ((TileWindow) -> Void)?
+    /// Width of the grab zone just outside a floating window's border.
+    private let edgeZone: CGFloat = 8
+
+    private struct EdgeDrag {
+        let window: TileWindow
+        let left, right, top, bottom: Bool
+        let startFrame: CGRect
+        let startPoint: CGPoint
+    }
     private let hint = NSTextField(labelWithString: "")
 
     override var isFlipped: Bool { true }
@@ -79,28 +99,79 @@ final class WorkspaceView: NSView {
 
     // MARK: divider dragging
 
+    private var isFloating: Bool { workspace?.mode == .floating && workspace?.fullscreen == nil }
+
     private func divider(at p: CGPoint) -> Divider? {
-        guard workspace?.fullscreen == nil else { return nil }
+        guard workspace?.fullscreen == nil, workspace?.mode == .tiled else { return nil }
         return workspace?.tree.dividers.last { $0.rect.contains(p) }
+    }
+
+    /// Floating windows, front-most first.
+    private var floatingWindowsFrontFirst: [TileWindow] {
+        subviews.reversed().compactMap { $0 as? TileWindow }.filter { !$0.isHidden }
+    }
+
+    /// The floating window whose edge zone contains `p`, unless another window covers `p`.
+    private func edgeHit(at p: CGPoint) -> EdgeDrag? {
+        guard isFloating else { return nil }
+        for w in floatingWindowsFrontFirst {
+            let f = w.frame
+            if f.contains(p) { return nil }
+            if f.insetBy(dx: -edgeZone, dy: -edgeZone).contains(p) {
+                return EdgeDrag(window: w, left: p.x < f.minX, right: p.x > f.maxX,
+                                top: p.y < f.minY, bottom: p.y > f.maxY, startFrame: f, startPoint: p)
+            }
+        }
+        return nil
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         let local = convert(point, from: superview)
-        if divider(at: local) != nil { return self }
+        if divider(at: local) != nil || edgeHit(at: local) != nil { return self }
         return super.hitTest(point)
     }
 
     override func resetCursorRects() {
+        if isFloating {
+            // Back-most first, so cursor rects of front windows win where zones overlap.
+            for w in floatingWindowsFrontFirst.reversed() {
+                let f = w.frame, z = edgeZone
+                addCursorRect(CGRect(x: f.minX - z, y: f.minY, width: z, height: f.height), cursor: .resizeLeftRight)
+                addCursorRect(CGRect(x: f.maxX, y: f.minY, width: z, height: f.height), cursor: .resizeLeftRight)
+                addCursorRect(CGRect(x: f.minX, y: f.minY - z, width: f.width, height: z), cursor: .resizeUpDown)
+                addCursorRect(CGRect(x: f.minX, y: f.maxY, width: f.width, height: z), cursor: .resizeUpDown)
+            }
+            return
+        }
         for d in workspace?.tree.dividers ?? [] {
             addCursorRect(d.rect, cursor: d.node.stacked ? .resizeUpDown : .resizeLeftRight)
         }
     }
 
     override func mouseDown(with event: NSEvent) {
-        dragging = divider(at: convert(event.locationInWindow, from: nil))
+        let p = convert(event.locationInWindow, from: nil)
+        if let e = edgeHit(at: p) {
+            edgeDrag = e
+            onFloatingEdgeDrag?(e.window)
+            return
+        }
+        dragging = divider(at: p)
     }
 
     override func mouseDragged(with event: NSEvent) {
+        if let e = edgeDrag {
+            let p = convert(event.locationInWindow, from: nil)
+            let dx = p.x - e.startPoint.x, dy = p.y - e.startPoint.y
+            var f = e.startFrame
+            let minW = TileWindow.minFloatingSize.width, minH = TileWindow.minFloatingSize.height
+            if e.left { let x = min(f.maxX - minW, f.minX + dx); f.size.width = f.maxX - x; f.origin.x = x }
+            if e.right { f.size.width = max(minW, f.width + dx) }
+            if e.top { let y = min(f.maxY - minH, f.minY + dy); f.size.height = f.maxY - y; f.origin.y = y }
+            if e.bottom { f.size.height = max(minH, f.height + dy) }
+            e.window.floatFrame = f.integral
+            e.window.frame = f.integral
+            return
+        }
         guard let d = dragging else { return }
         let p = convert(event.locationInWindow, from: nil)
         let r = d.region
@@ -111,6 +182,7 @@ final class WorkspaceView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         dragging = nil
+        edgeDrag = nil
         window?.invalidateCursorRects(for: self)
     }
 }

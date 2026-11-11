@@ -27,10 +27,11 @@ for macOS full screen. During development, `swift run mac-lucent --windowed` wor
 | ⌘ , | Settings |
 | ⌘ W | Close window |
 | ⌘ ← ↑ ↓ → | Move focus |
-| ⌘ ⇧ ← ↑ ↓ → | Swap window with neighbour |
-| ⌘ ⌃ ← ↑ ↓ → | Resize split (or drag the gap between windows) |
+| ⌘ ⇧ ← ↑ ↓ → | Swap window with neighbour (floating: move it) |
+| ⌘ ⌃ ← ↑ ↓ → | Resize split, or drag the gap between windows (floating: resize) |
 | ⌘ J | Toggle split direction |
 | ⌘ F | Fullscreen the focused window |
+| ⌘ ⇧ F | Toggle the current workspace between tiled and floating |
 | ⌘ 1–9 | Switch workspace |
 | ⌘ ⇧ 1–9 | Move window to workspace |
 | ⌘ ⌥ ← / → | Previous / next workspace |
@@ -66,9 +67,21 @@ Sources/MacLucent/
     Overlays.swift      launcher + keybinding help
 ```
 
+### Floating workspaces
+
+Each workspace is either **tiled** (dwindle) or **floating**. Toggle the current one with ⌘ ⇧ F, or pick
+them in Settings → Workspaces; the choice is saved. On a floating workspace windows can overlap:
+
+- ⌘-drag moves a window, ⌘-right-drag resizes it, or drag just outside a window's border to resize from that edge
+- clicking a window raises it (focus-follows-mouse focuses without raising)
+- new windows open centered and cascade
+
+The tiled arrangement is kept while a workspace floats, so switching back restores it, and each
+window remembers its floating position for next time.
+
 ### Settings
 
-⌘ , (or the launcher) opens the Settings app: gaps, border size and colors, rounding, shadow,
+⌘ , (or the launcher) opens the Settings app: floating workspaces, gaps, border size and colors, rounding, shadow,
 inactive dimming, terminal opacity and font, blur, animation speeds, browser home page and
 search URL, and the wallpaper. Changes apply live and are saved to
 `~/.config/mac-lucent/settings.json` (hand-editable; unknown or missing keys are ignored).

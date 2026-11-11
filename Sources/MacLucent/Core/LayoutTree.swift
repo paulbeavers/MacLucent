@@ -145,17 +145,25 @@ final class LayoutTree {
     /// The geometrically nearest window in `direction` (flipped coordinates: up = smaller y).
     func neighbor(of window: TileWindow, _ direction: Direction) -> TileWindow? {
         guard let r = rect(for: window) else { return nil }
+        let others = windows.filter { $0 !== window }.compactMap { w in rect(for: w).map { (w, $0) } }
+        return LayoutTree.nearest(from: r, among: others, direction, overlapping: false)
+    }
+
+    /// Geometric neighbour search shared by tiled and floating layouts. Tiles never overlap, so
+    /// tiled search requires the candidate to lie entirely beyond the edge; floating windows may
+    /// overlap, so there it only requires the candidate's center to be in that direction.
+    static func nearest(from r: CGRect, among candidates: [(TileWindow, CGRect)], _ direction: Direction,
+                        overlapping: Bool) -> TileWindow? {
+        let eps: CGFloat = 1
         var best: (TileWindow, CGFloat)?
-        for w in windows where w !== window {
-            guard let o = rect(for: w) else { continue }
-            let eps: CGFloat = 1
+        for (w, o) in candidates {
             let inDirection: Bool
             let overlap: CGFloat
             switch direction {
-            case .left:  inDirection = o.maxX <= r.minX + eps; overlap = min(o.maxY, r.maxY) - max(o.minY, r.minY)
-            case .right: inDirection = o.minX >= r.maxX - eps; overlap = min(o.maxY, r.maxY) - max(o.minY, r.minY)
-            case .up:    inDirection = o.maxY <= r.minY + eps; overlap = min(o.maxX, r.maxX) - max(o.minX, r.minX)
-            case .down:  inDirection = o.minY >= r.maxY - eps; overlap = min(o.maxX, r.maxX) - max(o.minX, r.minX)
+            case .left:  inDirection = overlapping ? o.midX < r.midX : o.maxX <= r.minX + eps; overlap = min(o.maxY, r.maxY) - max(o.minY, r.minY)
+            case .right: inDirection = overlapping ? o.midX > r.midX : o.minX >= r.maxX - eps; overlap = min(o.maxY, r.maxY) - max(o.minY, r.minY)
+            case .up:    inDirection = overlapping ? o.midY < r.midY : o.maxY <= r.minY + eps; overlap = min(o.maxX, r.maxX) - max(o.minX, r.minX)
+            case .down:  inDirection = overlapping ? o.midY > r.midY : o.minY >= r.maxY - eps; overlap = min(o.maxX, r.maxX) - max(o.minX, r.minX)
             }
             guard inDirection else { continue }
             let dx = o.midX - r.midX, dy = o.midY - r.midY

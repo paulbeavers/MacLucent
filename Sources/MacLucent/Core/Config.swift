@@ -56,6 +56,7 @@ struct SettingsFile: Codable {
     var terminalFontSize: Double?
     var terminalFontFamily: String?
     var wallpaperPath: String?
+    var floatingWorkspaces: [Int]?
 }
 
 /// Runtime configuration, modelled on hyprland.conf's `general`, `decoration` and
@@ -91,6 +92,8 @@ final class Config {
     var barMargin: CGFloat = 8
 
     // workspaces
+    /// Workspaces (1-based) that use floating instead of tiled layout.
+    var floatingWorkspaces: Set<Int> = []
     var workspaceCount = 9
     var minVisibleWorkspaces = 5
 
@@ -161,7 +164,7 @@ final class Config {
             blur: blur, animationsEnabled: animationsEnabled, animationDuration: animationDuration,
             workspaceAnimationDuration: workspaceAnimationDuration, homepage: homepage, searchURL: searchURL,
             terminalFontSize: terminalFontSize, terminalFontFamily: terminalFontFamily ?? "",
-            wallpaperPath: wallpaperPath ?? "")
+            wallpaperPath: wallpaperPath ?? "", floatingWorkspaces: floatingWorkspaces.sorted())
     }
 
     func apply(_ f: SettingsFile) {
@@ -185,6 +188,7 @@ final class Config {
         if let v = f.terminalFontSize { terminalFontSize = CGFloat(v) }
         if let v = f.terminalFontFamily { terminalFontFamily = v.isEmpty ? nil : v }
         if let v = f.wallpaperPath { wallpaperPath = v.isEmpty ? nil : v }
+        if let v = f.floatingWorkspaces { floatingWorkspaces = Set(v) }
     }
 
     /// Load saved settings, if any. Call once at launch, before any views are built.

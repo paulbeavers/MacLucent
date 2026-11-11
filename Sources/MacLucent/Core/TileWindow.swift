@@ -6,6 +6,9 @@ final class TileWindow: NSView {
     let app: TileApp
     /// The AppRegistry id this window was launched from, if any.
     var appID: String?
+    /// Position and size when its workspace is floating (nil until it has floated once).
+    var floatFrame: CGRect?
+    static let minFloatingSize = CGSize(width: 220, height: 140)
     private let gradient = CAGradientLayer()
     private let borderMask = CAShapeLayer()
     private let content = NSView()

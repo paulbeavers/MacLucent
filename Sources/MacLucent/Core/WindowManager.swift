@@ -9,6 +9,17 @@ final class WindowManager {
     private(set) var current: Workspace
     private var monitors: [Any] = []
     private var closing = Set<ObjectIdentifier>()
+    /// An in-progress ⌘-drag (move) or ⌘-right-drag (resize) of a floating window.
+    private var mouseDrag: MouseDrag?
+
+    private struct MouseDrag {
+        let window: TileWindow
+        let resizing: Bool
+        let startPoint: CGPoint
+        let startFrame: CGRect
+        let downEvent: NSEvent
+        var moved = false
+    }
 
     private var config: Config { .shared }
     /// Hyprland's default "myBezier" (0.05, 0.9, 0.1, 1.05) – a slight overshoot.
@@ -23,9 +34,14 @@ final class WindowManager {
         current = workspaces[0]
         for ws in workspaces {
             ws.view.isHidden = ws !== current
+            ws.mode = Config.shared.floatingWorkspaces.contains(ws.index) ? .floating : .tiled
             ws.view.onLayoutChange = { [weak self, weak ws] in
                 guard let self, let ws else { return }
                 self.relayout(ws, animated: false)
+            }
+            ws.view.onFloatingEdgeDrag = { [weak self] w in
+                guard let self, w !== self.current.focused else { return }
+                self.focus(w)
             }
             desktop.stage.addSubview(ws.view)
         }
@@ -36,7 +52,9 @@ final class WindowManager {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.desktop.needsLayout = true
-                self.relayout(self.current, animated: false)
+                let modeChanged = self.syncModesFromConfig()
+                self.relayout(self.current, animated: modeChanged)
+                self.updateBar()
             }
         }
         updateBar()
@@ -68,6 +86,7 @@ final class WindowManager {
         ws.fullscreen = nil
         ws.tree.insert(w, near: ws.focused)
         ws.view.addSubview(w)
+        if ws.mode == .floating { w.floatFrame = defaultFloatFrame(in: ws) }
         relayout(ws, animated: true, appearing: w)
         focus(w)
         return w
@@ -122,9 +141,14 @@ final class WindowManager {
 
     // MARK: - Focus
 
-    func focus(_ w: TileWindow) {
+    /// `raise: false` is used for focus-follows-mouse, so hovering doesn't reshuffle floating windows.
+    func focus(_ w: TileWindow, raise: Bool = true) {
         guard let ws = workspace(of: w) else { return }
         if ws !== current { switchTo(ws.index) }
+        if raise, ws.mode == .floating, ws.fullscreen == nil, ws.view.subviews.last !== w {
+            ws.view.addSubview(w, positioned: .above, relativeTo: nil) // raise
+            ws.view.window?.invalidateCursorRects(for: ws.view)
+        }
         for other in ws.windows { other.isActive = other === w }
         ws.noteFocused(w)
         w.app.focus()
@@ -137,24 +161,63 @@ final class WindowManager {
             return
         }
         if current.fullscreen != nil { return }
+        if current.mode == .floating {
+            let others = current.windows.filter { $0 !== w && !$0.isHidden }.map { ($0, $0.frame) }
+            if let n = LayoutTree.nearest(from: w.frame, among: others, d, overlapping: true) { focus(n) }
+            return
+        }
         if let n = current.tree.neighbor(of: w, d) { focus(n) }
     }
 
+    /// Tiled: swap with the neighbour. Floating: move the window.
     func swap(_ d: Direction) {
-        guard let w = current.focused, current.fullscreen == nil,
-              let n = current.tree.neighbor(of: w, d) else { return }
+        guard let w = current.focused, current.fullscreen == nil else { return }
+        if current.mode == .floating {
+            nudgeFloating(w, move: d)
+            return
+        }
+        guard let n = current.tree.neighbor(of: w, d) else { return }
         current.tree.swap(w, n)
         relayout(current, animated: true)
     }
 
+    /// Tiled: move the split. Floating: grow/shrink the window from its right/bottom edge.
     func resize(_ d: Direction) {
         guard let w = current.focused else { return }
+        if current.mode == .floating {
+            nudgeFloating(w, resize: d)
+            return
+        }
         current.tree.resize(w, direction: d)
         relayout(current, animated: true)
     }
 
+    private static let nudge: CGFloat = 40
+
+    private func nudgeFloating(_ w: TileWindow, move d: Direction? = nil, resize r: Direction? = nil) {
+        var f = w.floatFrame ?? w.frame
+        let n = Self.nudge
+        switch d {
+        case .left?: f.origin.x -= n
+        case .right?: f.origin.x += n
+        case .up?: f.origin.y -= n
+        case .down?: f.origin.y += n
+        case nil: break
+        }
+        let min = TileWindow.minFloatingSize
+        switch r {
+        case .left?: f.size.width = max(min.width, f.width - n)
+        case .right?: f.size.width += n
+        case .up?: f.size.height = max(min.height, f.height - n)
+        case .down?: f.size.height += n
+        case nil: break
+        }
+        w.floatFrame = clampFloating(f, in: current.view.bounds)
+        relayout(current, animated: true)
+    }
+
     func toggleSplit() {
-        guard let w = current.focused else { return }
+        guard let w = current.focused, current.mode == .tiled else { return }
         current.tree.toggleSplit(of: w)
         relayout(current, animated: true)
     }
@@ -205,6 +268,37 @@ final class WindowManager {
         updateBar()
     }
 
+    /// Switch the current workspace between tiled and floating (persisted in settings).
+    func toggleFloating() {
+        if config.floatingWorkspaces.contains(current.index) {
+            config.floatingWorkspaces.remove(current.index)
+        } else {
+            config.floatingWorkspaces.insert(current.index)
+        }
+        config.save()
+        config.notifyChanged() // syncModesFromConfig applies it, animated
+    }
+
+    /// Apply `Config.floatingWorkspaces`. Returns true if the current workspace changed mode.
+    @discardableResult
+    private func syncModesFromConfig() -> Bool {
+        var currentChanged = false
+        for ws in workspaces {
+            let mode: LayoutMode = config.floatingWorkspaces.contains(ws.index) ? .floating : .tiled
+            guard mode != ws.mode else { continue }
+            if mode == .floating {
+                // Windows that have never floated start where they are tiled now.
+                ws.tree.layout(in: ws.view.bounds)
+                for w in ws.windows where w.floatFrame == nil {
+                    w.floatFrame = ws.tree.rect(for: w) ?? defaultFloatFrame(in: ws)
+                }
+            }
+            ws.mode = mode
+            if ws === current { currentChanged = true } else { relayout(ws, animated: false) }
+        }
+        return currentChanged
+    }
+
     func switchRelative(_ delta: Int) {
         let n = current.index + delta
         if n >= 1 && n <= workspaces.count { switchTo(n) }
@@ -223,6 +317,7 @@ final class WindowManager {
         target.view.addSubview(w)
         target.noteFocused(w)
         target.view.frame = desktop.stage.bounds
+        if target.mode == .floating, w.floatFrame == nil { w.floatFrame = defaultFloatFrame(in: target) }
         relayout(target, animated: false)
         relayout(src, animated: true)
         if let next = src.history.last ?? src.windows.last {
@@ -238,8 +333,32 @@ final class WindowManager {
     private func stageDidResize() {
         for ws in workspaces {
             ws.view.frame = desktop.stage.bounds
+            for w in ws.windows {
+                if let f = w.floatFrame { w.floatFrame = clampFloating(f, in: ws.view.bounds) }
+            }
             relayout(ws, animated: false)
         }
+    }
+
+    /// Centered, ~60% of the stage, cascading for each additional floating window.
+    private func defaultFloatFrame(in ws: Workspace) -> CGRect {
+        let b = ws.view.bounds
+        let w = min(max(b.width * 0.55, 480), 1100, b.width - 2 * config.gapsOut)
+        let h = min(max(b.height * 0.6, 320), 760, b.height - 2 * config.gapsOut)
+        let n = CGFloat(ws.windows.filter { $0.floatFrame != nil }.count % 8)
+        let f = CGRect(x: (b.width - w) / 2 - 84 + n * 28, y: (b.height - h) / 2 - 84 + n * 28, width: w, height: h)
+        return clampFloating(f.integral, in: b)
+    }
+
+    /// Keep a floating window at least partly on screen and above its minimum size.
+    private func clampFloating(_ f: CGRect, in b: CGRect) -> CGRect {
+        var r = f
+        r.size.width = max(TileWindow.minFloatingSize.width, min(r.width, b.width))
+        r.size.height = max(TileWindow.minFloatingSize.height, min(r.height, b.height))
+        let keep: CGFloat = 60
+        r.origin.x = min(max(r.minX, b.minX - r.width + keep), b.maxX - keep)
+        r.origin.y = min(max(r.minY, b.minY), b.maxY - keep) // never lose the top edge
+        return r.integral
     }
 
     func relayout(_ ws: Workspace, animated: Bool, appearing: TileWindow? = nil) {
@@ -251,6 +370,10 @@ final class WindowManager {
         var targets: [(TileWindow, CGRect)] = []
         for w in ws.windows {
             guard var r = ws.tree.rect(for: w) else { continue }
+            if ws.mode == .floating {
+                if w.floatFrame == nil { w.floatFrame = r }
+                r = w.floatFrame!
+            }
             if let fs = ws.fullscreen {
                 w.isHidden = w !== fs
                 if w === fs {
@@ -304,6 +427,7 @@ final class WindowManager {
         let app = current.focused?.app
         let mode: String
         if current.fullscreen != nil { mode = "fullscreen" }
+        else if current.mode == .floating { mode = "floating" }
         else { mode = "dwindle" }
         desktop.bar.update(workspaces: states,
                            title: app?.title ?? "",
@@ -323,12 +447,29 @@ final class WindowManager {
             return self.handleKey(e) ? nil : e
         } as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] e in
-            self?.handleMouseDown(e)
+            guard let self else { return e }
+            if self.beginFloatingDrag(e) { return nil }
+            self.handleMouseDown(e)
+            return e
+        } as Any)
+        monitors.append(NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDragged, .rightMouseDragged]) { [weak self] e in
+            guard let self, self.mouseDrag != nil else { return e }
+            self.continueFloatingDrag(e)
+            return nil
+        } as Any)
+        monitors.append(NSEvent.addLocalMonitorForEvents(matching: [.leftMouseUp, .rightMouseUp]) { [weak self] e in
+            guard let self, let drag = self.mouseDrag else { return e }
+            self.mouseDrag = nil
+            self.current.view.window?.invalidateCursorRects(for: self.current.view)
+            if drag.moved { return nil }
+            // A plain ⌘-click (no drag): deliver it after all, e.g. ⌘-click on a link.
+            e.window?.sendEvent(drag.downEvent)
             return e
         } as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { [weak self] e in
             guard let self, self.config.focusFollowsMouse else { return e }
-            if let w = self.window(at: e), w !== self.current.focused, self.desktop.overlay == nil { self.focus(w) }
+            if let w = self.window(at: e), w !== self.current.focused, self.desktop.overlay == nil,
+               self.mouseDrag == nil { self.focus(w, raise: false) }
             return e
         } as Any)
     }
@@ -336,7 +477,44 @@ final class WindowManager {
     private func window(at e: NSEvent) -> TileWindow? {
         guard e.window === desktop.window else { return nil }
         let p = current.view.convert(e.locationInWindow, from: nil)
-        return current.windows.last { !$0.isHidden && $0.frame.contains(p) }
+        // Front-most first: floating windows can overlap.
+        return current.view.subviews.reversed().lazy
+            .compactMap { $0 as? TileWindow }
+            .first { !$0.isHidden && $0.frame.contains(p) }
+    }
+
+    /// ⌘-drag moves and ⌘-right-drag resizes a window on a floating workspace (like Hyprland's
+    /// Super+LMB / Super+RMB). Returns true if the event starts such a drag and should be swallowed.
+    private func beginFloatingDrag(_ e: NSEvent) -> Bool {
+        guard e.type == .leftMouseDown || e.type == .rightMouseDown,
+              e.modifierFlags.intersection([.command, .shift, .option, .control]) == .command,
+              desktop.overlay == nil, current.mode == .floating, current.fullscreen == nil,
+              let w = window(at: e) else { return false }
+        if w !== current.focused { focus(w) }
+        mouseDrag = MouseDrag(window: w, resizing: e.type == .rightMouseDown,
+                              startPoint: current.view.convert(e.locationInWindow, from: nil),
+                              startFrame: w.floatFrame ?? w.frame, downEvent: e)
+        return true
+    }
+
+    private func continueFloatingDrag(_ e: NSEvent) {
+        guard var drag = mouseDrag else { return }
+        let p = current.view.convert(e.locationInWindow, from: nil)
+        let dx = p.x - drag.startPoint.x, dy = p.y - drag.startPoint.y
+        if !drag.moved && abs(dx) + abs(dy) < 4 { return } // ignore jitter on a click
+        drag.moved = true
+        mouseDrag = drag
+        var f = drag.startFrame
+        if drag.resizing {
+            f.size.width = max(TileWindow.minFloatingSize.width, f.width + dx)
+            f.size.height = max(TileWindow.minFloatingSize.height, f.height + dy)
+        } else {
+            f.origin.x += dx
+            f.origin.y += dy
+        }
+        f = clampFloating(f, in: current.view.bounds)
+        drag.window.floatFrame = f
+        drag.window.frame = f
     }
 
     private func handleMouseDown(_ e: NSEvent) {
@@ -345,8 +523,8 @@ final class WindowManager {
             if !overlay.panelFrame.contains(p) { desktop.dismissOverlay() }
             return
         }
-        if let w = window(at: e), w !== current.focused {
-            focus(w)
+        if let w = window(at: e), w !== current.focused || current.view.subviews.last !== w {
+            focus(w) // click focuses and raises
         }
     }
 
@@ -384,6 +562,7 @@ final class WindowManager {
             if let d = Self.arrowKeys[code] { focus(d); return true }
         }
         if flags == [.command, .shift] {
+            if chars == "f" { toggleFloating(); return true }
             if let n = Self.digitKeys[code] { moveFocused(to: n); return true }
             if let d = Self.arrowKeys[code] { swap(d); return true }
         }
