@@ -21,7 +21,7 @@ final class LucentTerminalView: LocalProcessTerminalView {
 ///  - deliver: hardware key event → app receives it
 ///  - echo:    app receives it → shell output arrives from the PTY
 ///  - drawn:   app receives it → the main run loop has drawn and committed that output
-/// Lines go to ~/Library/Logs/mac-lucent/latency.log.
+/// Lines go to ~/Library/Logs/Lucent/latency.log.
 @MainActor
 enum LatencyProbe {
     static var enabled = ProcessInfo.processInfo.environment["ML_LATENCY_LOG"] != nil
@@ -34,7 +34,7 @@ enum LatencyProbe {
     private static var hooked = Set<ObjectIdentifier>()
     private static var observer: CFRunLoopObserver?
     private static let handle: FileHandle? = {
-        let dir = NSHomeDirectory() + "/Library/Logs/mac-lucent"
+        let dir = NSHomeDirectory() + "/Library/Logs/Lucent"
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         let path = dir + "/latency.log"
         FileManager.default.createFile(atPath: path, contents: nil)

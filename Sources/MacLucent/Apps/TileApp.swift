@@ -40,7 +40,7 @@ extension TileApp {
     var sessionState: JSONValue? { .object([:]) } // restorable, no state needed
 }
 
-/// A shortcut key for launching an app; the modifier is mac-lucent's (⌘ or ⌥, see Settings).
+/// A shortcut key for launching an app; the modifier is Lucent's (⌘ or ⌥, see Settings).
 struct AppShortcut {
     let character: String?
     let keyCodes: [UInt16]
@@ -68,7 +68,7 @@ struct AppDescriptor {
     let id: String
     let name: String
     let symbolName: String
-    /// Launch shortcut (with the mac-lucent modifier). Must not clash with the window-manager
+    /// Launch shortcut (with the Lucent modifier). Must not clash with the window-manager
     /// bindings: D W F J / Tab, digits and arrows.
     var shortcut: AppShortcut? = nil
     /// Only one window of this app may exist; launching again focuses it.

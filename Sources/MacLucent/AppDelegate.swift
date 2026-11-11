@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private(set) var manager: WindowManager!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Config.migrateLegacyDirectory() // before loading settings/session from the new folder
         BundledFonts.register() // before any terminal picks its font
         Config.shared.load()
         NSApp.applicationIconImage = AppIcon.image(size: 512)
@@ -23,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let screen = NSScreen.main ?? NSScreen.screens[0]
         let args = CommandLine.arguments
-        // Default: macOS native full screen, so mac-lucent gets its own Space (a page in Mission
+        // Default: macOS native full screen, so Lucent gets its own Space (a page in Mission
         // Control / ⌃↑, swipeable like any full-screen app). `--borderless` instead covers the
         // current Space with a borderless window (menu bar and Dock auto-hidden); `--windowed`
         // opens a normal window.
@@ -33,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                             styleMask: covering ? [.borderless, .miniaturizable]
                                                 : [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                             backing: .buffered, defer: false)
-        window.title = "mac-lucent"
+        window.title = "Lucent"
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.titlebarSeparatorStyle = .none
@@ -129,7 +130,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let terminals = manager.allWindows.filter { $0.app is TerminalApp }.count
         guard terminals > 0, !CommandLine.arguments.contains("--no-confirm-quit") else { return .terminateNow }
         let alert = NSAlert()
-        alert.messageText = "Quit mac-lucent?"
+        alert.messageText = "Quit Lucent?"
         alert.informativeText = "\(terminals) terminal\(terminals == 1 ? "" : "s") will be closed."
         alert.addButton(withTitle: "Quit")
         alert.addButton(withTitle: "Cancel")
@@ -203,10 +204,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    /// Debug aid: `ML_WINDOW_LOG=1` records our windows to ~/Library/Logs/mac-lucent/windows.log.
+    /// Debug aid: `ML_WINDOW_LOG=1` records our windows to ~/Library/Logs/Lucent/windows.log.
     private func logWindows(_ event: String) {
         guard ProcessInfo.processInfo.environment["ML_WINDOW_LOG"] != nil else { return }
-        let dir = NSHomeDirectory() + "/Library/Logs/mac-lucent"
+        let dir = NSHomeDirectory() + "/Library/Logs/Lucent"
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         let path = dir + "/windows.log"
         if !FileManager.default.fileExists(atPath: path) { FileManager.default.createFile(atPath: path, contents: nil) }
@@ -223,16 +224,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let main = NSMenu()
 
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "About mac-lucent", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: "About Lucent", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(item("Settings…", #selector(openSettings), ","))
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Hide mac-lucent", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: "Hide Lucent", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         let others = appMenu.addItem(withTitle: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
         others.keyEquivalentModifierMask = [.command, .option]
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Quit mac-lucent", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        main.addItem(submenu(appMenu, title: "mac-lucent"))
+        appMenu.addItem(withTitle: "Quit Lucent", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        main.addItem(submenu(appMenu, title: "Lucent"))
 
         let file = NSMenu(title: "File")
         // One entry per registered app (Settings… lives in the app menu, as on macOS).
@@ -274,7 +275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return i
     }
 
-    /// A mac-lucent menu item; its shortcut uses the configured modifier key (⌘ or ⌥).
+    /// A Lucent menu item; its shortcut uses the configured modifier key (⌘ or ⌥).
     private func item(_ title: String, _ action: Selector, _ key: String) -> NSMenuItem {
         let i = NSMenuItem(title: title, action: action, keyEquivalent: key)
         i.keyEquivalentModifierMask = Config.shared.mod

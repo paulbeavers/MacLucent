@@ -33,12 +33,12 @@ extension NSColor {
     }
 }
 
-/// The modifier used for mac-lucent's shortcuts (Hyprland's "Super").
+/// The modifier used for Lucent's shortcuts (Hyprland's "Super").
 enum ModifierKey: String {
     case command, option
 }
 
-/// The user-editable subset of `Config`, as stored in ~/.config/mac-lucent/settings.json.
+/// The user-editable subset of `Config`, as stored in ~/.config/lucent/settings.json.
 /// Every field is optional so older or hand-edited files still load.
 struct SettingsFile: Codable {
     var gapsIn: Double?
@@ -73,6 +73,31 @@ struct SettingsFile: Codable {
 final class Config {
     static let shared = Config()
 
+    /// The app's display name.
+    nonisolated static let appName = "Lucent"
+
+    /// ~/.config/lucent — settings, session and wallpaper.
+    nonisolated static var directory: URL {
+        URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/lucent")
+    }
+
+    /// The app used to be called mac-lucent; move its config folder over once.
+    nonisolated static func migrateLegacyDirectory() {
+        // Scripted test runs must never move the user's real config.
+        let env = ProcessInfo.processInfo.environment
+        guard env["ML_BACKGROUND"] == nil, !CommandLine.arguments.contains("--snapshot") else { return }
+        let old = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/mac-lucent")
+        migrate(from: old, to: directory)
+    }
+
+    /// Move `old` to `new` if only the old folder exists. Separate from the paths for testing.
+    nonisolated static func migrate(from old: URL, to new: URL) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: old.path), !fm.fileExists(atPath: new.path) else { return }
+        try? fm.createDirectory(at: new.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? fm.moveItem(at: old, to: new)
+    }
+
     // general
     var gapsIn: CGFloat = 5
     var gapsOut: CGFloat = 12
@@ -82,12 +107,12 @@ final class Config {
     var focusFollowsMouse = false
     /// Reopen the previous session's workspaces, layouts, terminals and browser tabs at launch.
     var restoreSession = true
-    /// ⌘ (default) or ⌥ for all mac-lucent shortcuts. Standard macOS ones (copy/paste, quit) stay on ⌘.
+    /// ⌘ (default) or ⌥ for all Lucent shortcuts. Standard macOS ones (copy/paste, quit) stay on ⌘.
     var modifierKey: ModifierKey = .command
     var mod: NSEvent.ModifierFlags { modifierKey == .option ? .option : .command }
     var modSymbol: String { modifierKey == .option ? "⌥" : "⌘" }
 
-    /// Render a shortcut written with "⌘" for the mac-lucent modifier, using the current one.
+    /// Render a shortcut written with "⌘" for the Lucent modifier, using the current one.
     func shortcut(_ s: String) -> String { s.replacingOccurrences(of: "⌘", with: modSymbol) }
     /// With focus-follows-mouse on a floating workspace, also bring the hovered window to the front.
     var raiseOnHover = true
@@ -127,7 +152,7 @@ final class Config {
                              "MesloLGS NF", "FiraCode Nerd Font Mono", "SF Mono", "Menlo"]
     /// Optional wallpaper image; falls back to the built-in gradient when nil or missing.
     var wallpaperPath: String? = {
-        let p = NSHomeDirectory() + "/.config/mac-lucent/wallpaper.png"
+        let p = Config.directory.appendingPathComponent("wallpaper.png").path
         return FileManager.default.fileExists(atPath: p) ? p : nil
     }()
 
@@ -174,7 +199,7 @@ final class Config {
     // MARK: Persistence
 
     static var settingsURL: URL {
-        URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/mac-lucent/settings.json")
+        directory.appendingPathComponent("settings.json")
     }
 
     func snapshot() -> SettingsFile {

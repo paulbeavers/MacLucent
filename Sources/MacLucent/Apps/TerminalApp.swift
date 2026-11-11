@@ -59,7 +59,7 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
         }
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
-        env["TERM_PROGRAM"] = "mac-lucent"
+        env["TERM_PROGRAM"] = "lucent"
         env["SHELL"] = shell
         env["LANG"] = env["LANG"] ?? "en_US.UTF-8"
         env["BASH_SILENCE_DEPRECATION_WARNING"] = "1"

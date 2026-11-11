@@ -1,6 +1,6 @@
 import AppKit
 
-/// Live statistics about mac-lucent: version, windows, CPU and memory of the app and its
+/// Live statistics about Lucent: version, windows, CPU and memory of the app and its
 /// shells, and a few system numbers. Refreshes once per second.
 final class StatsApp: NSObject, TileApp {
     let view: NSView
@@ -17,12 +17,12 @@ final class StatsApp: NSObject, TileApp {
     private var c: Config { .shared }
 
     // header
-    private let heading = NSTextField(labelWithString: "mac-lucent")
+    private let heading = NSTextField(labelWithString: "Lucent")
     private let subheading = NSTextField(labelWithString: "")
 
     // tiles
-    private let appCPU = StatTile(label: "mac-lucent CPU")
-    private let appMemory = StatTile(label: "mac-lucent memory")
+    private let appCPU = StatTile(label: "Lucent CPU")
+    private let appMemory = StatTile(label: "Lucent memory")
     private let shellCPU = StatTile(label: "Shells CPU")
     private let shellMemory = StatTile(label: "Shells memory")
     private let systemCPU = StatTile(label: "System CPU")

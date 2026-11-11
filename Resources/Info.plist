@@ -2,9 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key><string>mac-lucent</string>
-    <key>CFBundleDisplayName</key><string>mac-lucent</string>
-    <key>CFBundleExecutable</key><string>mac-lucent</string>
+    <key>CFBundleName</key><string>Lucent</string>
+    <key>CFBundleDisplayName</key><string>Lucent</string>
+    <key>CFBundleExecutable</key><string>Lucent</string>
     <key>CFBundleIdentifier</key><string>dev.maclucent.mac-lucent</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>

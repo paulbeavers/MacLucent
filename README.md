@@ -1,4 +1,8 @@
-# mac-lucent
+# Lucent
+
+Lucent for the Mac — the macOS counterpart of the Lucent Hyprland config.
+
+*(Formerly mac-lucent. Settings in `~/.config/mac-lucent` are moved to `~/.config/lucent` automatically.)*
 
 A full-screen, Hyprland-style tiling workspace for macOS, built for software developers.
 It runs as a normal macOS app (not a VM). Inside it you get workspaces, tiled
@@ -9,20 +13,20 @@ terminal windows running **bash** in a real PTY, and tiled **web browser** windo
 Requires Xcode / Swift 5.9+ and macOS 13+.
 
 ```bash
-./scripts/build-app.sh          # release build → build/mac-lucent.app
-open build/mac-lucent.app
+./scripts/build-app.sh          # release build → build/Lucent.app
+open build/Lucent.app
 ```
 
 The app opens in macOS full screen — its own Space, so it shows up as a page in Mission
 Control (⌃↑) and you can swipe to and from it — and starts with one terminal. Use `--windowed`
-for a regular window, or `--borderless` to cover the current Space without a full-screen Space. During development, `swift run mac-lucent --windowed` works too.
+for a regular window, or `--borderless` to cover the current Space without a full-screen Space. During development, `swift run lucent --windowed` works too.
 
 ## Keybindings (⌘ is the "Super" key)
 
-The modifier is configurable: Settings → General → **Modifier key** switches every mac-lucent
+The modifier is configurable: Settings → General → **Modifier key** switches every Lucent
 shortcut below from ⌘ to ⌥ (standard macOS ones such as copy/paste, ⌘Q and ⌘⌥←/→ stay as they
 are). With ⌥, **⌥Tab / ⌥⇧Tab** cycles through the workspaces that have windows (⌘Tab can't be
-used — it belongs to macOS). Note that the terminal uses ⌥ as Meta, so ⌥ shortcuts mac-lucent
+used — it belongs to macOS). Note that the terminal uses ⌥ as Meta, so ⌥ shortcuts Lucent
 claims (e.g. ⌥B, ⌥F, ⌥D) no longer reach the shell.
 
 | Keys | Action |
@@ -94,8 +98,8 @@ window remembers its floating position for next time.
 
 ### Session restore
 
-When you quit (and every 15 seconds while running), mac-lucent saves your session to
-`~/.config/mac-lucent/session.json`: each workspace's tiling layout (split directions and sizes),
+When you quit (and every 15 seconds while running), Lucent saves your session to
+`~/.config/lucent/session.json`: each workspace's tiling layout (split directions and sizes),
 floating window positions, terminal folders, browser tabs (and the selected tab), Settings/Stats
 windows, the focused window and the current workspace. On launch it's rebuilt exactly. Terminals
 reopen in their folder with a fresh shell — running programs can't be restored. Turn it off in
@@ -107,16 +111,16 @@ Settings → General → **Restore windows on launch**. (Scripted test runs — 
 ⌘ , (or the launcher) opens the Settings app: floating workspaces, gaps, border size and colors, rounding, shadow,
 inactive dimming, terminal opacity and font, blur, animation speeds, browser home page and
 search URL, and the wallpaper. Changes apply live and are saved to
-`~/.config/mac-lucent/settings.json` (hand-editable; unknown or missing keys are ignored).
+`~/.config/lucent/settings.json` (hand-editable; unknown or missing keys are ignored).
 
 ### Stats
 
-⌘ I (or launcher → **Stats**) opens a live dashboard, refreshed every second: mac-lucent's version,
-git commit and uptime; CPU and memory of mac-lucent itself and of the shells in its terminals
+⌘ I (or launcher → **Stats**) opens a live dashboard, refreshed every second: Lucent's version,
+git commit and uptime; CPU and memory of Lucent itself and of the shells in its terminals
 (including everything they started), with 60-second sparklines (hover for values); system CPU,
 memory, disk and load; per-workspace window counts and modes; and per-terminal process counts.
-WebKit's web-content processes run outside mac-lucent's process tree, so browser page memory
-isn't included in the mac-lucent figures.
+WebKit's web-content processes run outside Lucent's process tree, so browser page memory
+isn't included in the Lucent figures.
 
 ### Adding a new app
 
@@ -142,8 +146,8 @@ Apps can read `Config.shared` and observe `.configDidChange` to react to setting
 
 ### Customising
 
-- Wallpaper: choose one in Settings, or put an image at `~/.config/mac-lucent/wallpaper.png`.
-- Fonts: mac-lucent ships with **JetBrains Mono**, **JetBrainsMono Nerd Font Mono** (with the
+- Wallpaper: choose one in Settings, or put an image at `~/.config/lucent/wallpaper.png`.
+- Fonts: Lucent ships with **JetBrains Mono**, **JetBrainsMono Nerd Font Mono** (with the
   icon glyphs prompt themes like Starship/Powerlevel use), **Fira Code**, **Cascadia Code** and
   **Hack** (in `Resources/Fonts`, registered for the app only — nothing is installed system-wide;
   each family's license is alongside it: SIL OFL 1.1, or MIT for Hack / Nerd Fonts patches).
@@ -162,7 +166,7 @@ Apps can read `Config.shared` and observe `.configDidChange` to react to setting
   strips those sequences from shell output; `ML_PTY_LOG=<file>` records raw output for debugging.
 - `ML_BACKGROUND=1` launches without taking keyboard focus (for scripted test runs).
 - `ML_LATENCY_LOG=1` logs per-keystroke latency (deliver / echo / drawn) to
-  `~/Library/Logs/mac-lucent/latency.log`; `--bench-typing` runs a synthetic typing benchmark
+  `~/Library/Logs/Lucent/latency.log`; `--bench-typing` runs a synthetic typing benchmark
   (`ML_BENCH_INTERVAL` sets the gap between keys).
 
 ### Debug flags

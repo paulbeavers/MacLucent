@@ -143,7 +143,7 @@ final class StatsSampler {
         let wall = Double(now &- lastWall)
         defer { lastWall = now }
 
-        // mac-lucent itself
+        // Lucent itself
         let me = ProcStats.usage(getpid())
         if let me {
             if primed { push(&appCPU, Double(me.cpuNs &- lastAppCPU) / wall * 100) }

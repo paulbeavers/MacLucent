@@ -482,7 +482,7 @@ final class WindowManager {
                            title: app?.title ?? "",
                            symbol: app?.symbolName,
                            mode: "\(mode) · \(current.windows.count)")
-        desktop.window?.title = app?.title ?? "mac-lucent"
+        desktop.window?.title = app?.title ?? "Lucent"
     }
 
     // MARK: - Input
@@ -594,7 +594,7 @@ final class WindowManager {
             return false
         }
 
-        // Shortcuts without the mac-lucent modifier (e.g. ⌃Tab for browser tabs, or ⌘ shortcuts
+        // Shortcuts without the Lucent modifier (e.g. ⌃Tab for browser tabs, or ⌘ shortcuts
         // when the modifier is ⌥) go straight to the focused app.
         guard flags.contains(mod) else { return current.focused?.app.handleKey(e) ?? false }
 

@@ -1,6 +1,6 @@
 import AppKit
 
-/// Saved workspaces, layouts and window contents (~/.config/mac-lucent/session.json).
+/// Saved workspaces, layouts and window contents (~/.config/lucent/session.json).
 struct SessionFile: Codable {
     var version = 1
     var currentWorkspace: Int
@@ -43,7 +43,7 @@ struct SessionFile: Codable {
     static var url: URL {
         // Test runs point this elsewhere so they never touch the real session.
         if let path = ProcessInfo.processInfo.environment["ML_SESSION_FILE"] { return URL(fileURLWithPath: path) }
-        return URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/mac-lucent/session.json")
+        return Config.directory.appendingPathComponent("session.json")
     }
 }
 

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Build mac-lucent.app into ./build
+# Build Lucent.app into ./build
 set -euo pipefail
 cd "$(dirname "$0")/.."
 CONFIG="${1:-release}"
 
 swift build -c "$CONFIG"
-BIN="$(swift build -c "$CONFIG" --show-bin-path)/mac-lucent"
+BIN="$(swift build -c "$CONFIG" --show-bin-path)/lucent"
 
-APP="build/mac-lucent.app"
+APP="build/Lucent.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN" "$APP/Contents/MacOS/mac-lucent"
+cp "$BIN" "$APP/Contents/MacOS/Lucent"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp -R Resources/Fonts "$APP/Contents/Resources/Fonts"   # bundled coding fonts + their licenses
 

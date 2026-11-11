@@ -1,7 +1,7 @@
 import AppKit
 import UniformTypeIdentifiers
 
-/// Settings window: edits `Config.shared` live and saves to ~/.config/mac-lucent/settings.json.
+/// Settings window: edits `Config.shared` live and saves to ~/.config/lucent/settings.json.
 final class SettingsApp: NSObject, TileApp {
     let view: NSView
     var title: String { "Settings" }

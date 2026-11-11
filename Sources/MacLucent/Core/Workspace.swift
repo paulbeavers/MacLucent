@@ -83,7 +83,7 @@ final class WorkspaceView: NSView {
         para.alignment = .center
         para.lineSpacing = 6
         let s = NSMutableAttributedString()
-        s.append(NSAttributedString(string: "mac-lucent\n", attributes: [
+        s.append(NSAttributedString(string: "Lucent\n", attributes: [
             .font: NSFont.systemFont(ofSize: 34, weight: .ultraLight), .foregroundColor: c.text.withAlphaComponent(0.55), .paragraphStyle: para]))
         // The first couple of apps with shortcuts (from the registry), then the launcher and help.
         let apps = AppRegistry.apps.filter { $0.shortcut != nil && !$0.singleInstance }.prefix(2)
