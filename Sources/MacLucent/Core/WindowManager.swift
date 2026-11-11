@@ -36,7 +36,7 @@ final class WindowManager {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.desktop.needsLayout = true
-                self.relayout(self.current, animated: true)
+                self.relayout(self.current, animated: false)
             }
         }
         updateBar()
@@ -46,10 +46,15 @@ final class WindowManager {
 
     func launch(_ id: String) {
         guard let d = AppRegistry.app(id) else { return }
-        open(d.make(self))
+        if d.singleInstance, let existing = allWindows.first(where: { $0.appID == id }) {
+            focus(existing)
+            return
+        }
+        open(d.make(self)).appID = id
     }
 
-    func open(_ app: TileApp, on ws: Workspace? = nil) {
+    @discardableResult
+    func open(_ app: TileApp, on ws: Workspace? = nil) -> TileWindow {
         let ws = ws ?? current
         let w = TileWindow(app: app)
         app.onTitleChange = { [weak self] in self?.updateBar() }
@@ -65,6 +70,7 @@ final class WindowManager {
         ws.view.addSubview(w)
         relayout(ws, animated: true, appearing: w)
         focus(w)
+        return w
     }
 
     func close(_ w: TileWindow) {
@@ -366,6 +372,7 @@ final class WindowManager {
             switch (code, chars) {
             case (36, _), (76, _): launch("terminal"); return true
             case (_, "b"): launch("browser"); return true
+            case (_, ","): launch("settings"); return true
             case (_, "d"): showLauncher(); return true
             case (_, "w"): closeFocused(); return true
             case (_, "f"): toggleFullscreen(); return true

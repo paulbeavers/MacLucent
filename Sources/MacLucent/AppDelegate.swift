@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private(set) var manager: WindowManager!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Config.shared.load()
         NSApp.applicationIconImage = AppIcon.image(size: 512)
         NSApp.mainMenu = buildMenu()
 
@@ -127,6 +128,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "About mac-lucent", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
+        appMenu.addItem(item("Settings…", #selector(openSettings), ","))
+        appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Hide mac-lucent", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         let others = appMenu.addItem(withTitle: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
         others.keyEquivalentModifierMask = [.command, .option]
@@ -177,6 +180,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func newTerminal() { manager.launch("terminal") }
     @objc private func newBrowser() { manager.launch("browser") }
     @objc private func showLauncher() { manager.showLauncher() }
+    @objc private func openSettings() { manager.launch("settings") }
     @objc private func showHelp() { desktop.showOverlay(HelpOverlay()) }
 }
 

@@ -137,6 +137,7 @@ final class HelpOverlay: OverlayView {
         ("⌘ ↩", "New terminal"),
         ("⌘ B", "New browser"),
         ("⌘ D", "App launcher"),
+        ("⌘ ,", "Settings"),
         ("⌘ W", "Close window"),
         ("⌘ ←↑↓→", "Move focus"),
         ("⌘ ⇧ ←↑↓→", "Swap window"),

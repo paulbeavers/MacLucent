@@ -70,7 +70,22 @@ final class BarView: NSView {
         clockLabel.textColor = c.text
 
         tick()
-        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in self?.tick() }
+        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.tick() }
+        }
+        NotificationCenter.default.addObserver(self, selector: #selector(configChanged), name: .configDidChange, object: nil)
+    }
+
+    @objc private func configChanged() {
+        let c = Config.shared
+        layer?.cornerRadius = c.rounding
+        if c.blur, background.superview == nil {
+            addSubview(background, positioned: .below, relativeTo: nil)
+        } else if !c.blur {
+            background.removeFromSuperview()
+        }
+        tint.layer?.backgroundColor = c.crust.withAlphaComponent(c.blur ? 0.55 : 0.85).cgColor
+        needsLayout = true
     }
 
     required init?(coder: NSCoder) { fatalError() }

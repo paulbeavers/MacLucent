@@ -10,13 +10,15 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
     var symbolName: String { "terminal" }
     var onTitleChange: (() -> Void)?
     var onRequestClose: (() -> Void)?
-    private var fontSize = Config.shared.terminalFontSize
+    /// Per-window zoom (⌘+/⌘−) on top of the configured font size.
+    private var zoom: CGFloat = 0
+    private var container: PaddedContainer { view as! PaddedContainer }
     private let padding: CGFloat = 8
 
     init(directory: String? = nil) {
         let c = Config.shared
         let effect = PaddedContainer(blur: c.blur)
-        effect.tint.layer?.backgroundColor = c.base.withAlphaComponent(c.terminalOpacity).cgColor
+        effect.tintColor = c.base.withAlphaComponent(c.terminalOpacity)
         view = effect
 
         terminal = LucentTerminalView(frame: CGRect(x: 0, y: 0, width: 800, height: 600))
@@ -31,6 +33,7 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
         effect.content = terminal
         effect.padding = padding
         effect.addSubview(terminal)
+        NotificationCenter.default.addObserver(self, selector: #selector(configChanged), name: .configDidChange, object: nil)
 
         let shell = Self.shellPath
         let dir = directory.flatMap { FileManager.default.fileExists(atPath: $0) ? $0 : nil } ?? NSHomeDirectory()
@@ -99,18 +102,28 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
         let flags = e.modifierFlags.intersection([.command, .shift, .option, .control])
         guard flags == .command || flags == [.command, .shift] else { return false }
         switch e.charactersIgnoringModifiers {
-        case "=", "+": setFontSize(fontSize + 1)
-        case "-", "_": setFontSize(fontSize - 1)
-        case "0": setFontSize(Config.shared.terminalFontSize)
+        case "=", "+": setZoom(zoom + 1)
+        case "-", "_": setZoom(zoom - 1)
+        case "0": setZoom(0)
         case "k": terminal.send(txt: "\u{0C}")
         default: return false
         }
         return true
     }
 
-    private func setFontSize(_ s: CGFloat) {
-        fontSize = min(40, max(7, s))
-        terminal.font = Config.shared.terminalFont(size: fontSize)
+    private func setZoom(_ z: CGFloat) {
+        let base = Config.shared.terminalFontSize
+        zoom = min(40, max(7, base + z)) - base
+        terminal.font = Config.shared.terminalFont(size: base + zoom)
+    }
+
+    @objc private func configChanged() {
+        let c = Config.shared
+        let font = c.terminalFont(size: max(7, c.terminalFontSize + zoom))
+        if font != terminal.font { terminal.font = font }
+        terminal.nativeBackgroundColor = c.base.withAlphaComponent(c.terminalOpacity)
+        container.tintColor = c.base.withAlphaComponent(c.terminalOpacity)
+        container.setBlur(c.blur)
     }
 
     // MARK: LocalProcessTerminalViewDelegate
@@ -142,36 +155,54 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
     }
 }
 
-/// Blurred backdrop + tint, with the terminal inset by `padding`.
+/// Optional blurred backdrop, with the terminal inset by `padding`. The tint fills only the
+/// padding ring, so it matches (rather than stacks on) the terminal's own translucent background.
 final class PaddedContainer: NSView {
-    let tint = NSView()
-    private let backdrop: NSVisualEffectView?
+    private let tint = CAShapeLayer()
+    var tintColor: NSColor = .clear {
+        didSet { tint.fillColor = tintColor.cgColor }
+    }
+    private var backdrop: NSVisualEffectView?
     weak var content: NSView?
     var padding: CGFloat = 8
 
     init(blur: Bool) {
-        backdrop = blur ? NSVisualEffectView() : nil
         super.init(frame: .zero)
         wantsLayer = true
-        if let b = backdrop {
-            b.material = .hudWindow
-            b.blendingMode = .withinWindow
-            b.state = .active
-            b.appearance = NSAppearance(named: .darkAqua)
-            addSubview(b)
-        }
-        tint.wantsLayer = true
-        tint.autoresizingMask = [.width, .height]
-        addSubview(tint)
+        setBlur(blur)
+        tint.fillRule = .evenOdd
+        layer?.addSublayer(tint)
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
+    func setBlur(_ on: Bool) {
+        if on, backdrop == nil {
+            let b = NSVisualEffectView(frame: bounds)
+            b.material = .hudWindow
+            b.blendingMode = .withinWindow
+            b.state = .active
+            b.appearance = NSAppearance(named: .darkAqua)
+            addSubview(b, positioned: .below, relativeTo: nil)
+            backdrop = b
+        } else if !on, let b = backdrop {
+            b.removeFromSuperview()
+            backdrop = nil
+        }
+    }
+
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
         backdrop?.frame = bounds
-        tint.frame = bounds
         let r = bounds.insetBy(dx: padding, dy: padding)
         content?.frame = r.width > 0 && r.height > 0 ? r : .zero
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        let path = CGMutablePath()
+        path.addRect(bounds)
+        if let f = content?.frame { path.addRect(f) }
+        tint.frame = bounds
+        tint.path = path
+        CATransaction.commit()
     }
 }

@@ -69,6 +69,22 @@ final class DesktopView: NSView {
 /// Built-in wallpaper: deep gradient with soft colored glows. Uses an image if configured.
 final class WallpaperView: NSView {
     private var image: NSImage? = Config.shared.wallpaperPath.flatMap { NSImage(contentsOfFile: $0) }
+    private var imagePath = Config.shared.wallpaperPath
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        NotificationCenter.default.addObserver(self, selector: #selector(configChanged), name: .configDidChange, object: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    @objc private func configChanged() {
+        let path = Config.shared.wallpaperPath
+        guard path != imagePath else { return }
+        imagePath = path
+        image = path.flatMap { NSImage(contentsOfFile: $0) }
+        needsDisplay = true
+    }
 
     override var isFlipped: Bool { true }
 

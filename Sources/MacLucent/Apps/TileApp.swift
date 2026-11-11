@@ -36,6 +36,8 @@ struct AppDescriptor {
     let name: String
     let symbolName: String
     let shortcut: String
+    /// Only one window of this app may exist; launching again focuses it.
+    var singleInstance = false
     let make: @MainActor (WindowManager) -> TileApp
 }
 
@@ -47,6 +49,9 @@ enum AppRegistry {
         },
         AppDescriptor(id: "browser", name: "Browser", symbolName: "globe", shortcut: "⌘B") { wm in
             BrowserApp(manager: wm)
+        },
+        AppDescriptor(id: "settings", name: "Settings", symbolName: "gearshape", shortcut: "⌘,", singleInstance: true) { _ in
+            SettingsApp()
         },
     ]
 

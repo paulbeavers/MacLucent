@@ -24,6 +24,7 @@ for macOS full screen. During development, `swift run mac-lucent --windowed` wor
 | ⌘ ↩ | New terminal (opens in the focused terminal's directory) |
 | ⌘ B | New browser |
 | ⌘ D | App launcher |
+| ⌘ , | Settings |
 | ⌘ W | Close window |
 | ⌘ ← ↑ ↓ → | Move focus |
 | ⌘ ⇧ ← ↑ ↓ → | Swap window with neighbour |
@@ -65,17 +66,25 @@ Sources/MacLucent/
     Overlays.swift      launcher + keybinding help
 ```
 
-### Adding a new app (e.g. Settings)
+### Settings
+
+⌘ , (or the launcher) opens the Settings app: gaps, border size and colors, rounding, shadow,
+inactive dimming, terminal opacity and font, blur, animation speeds, browser home page and
+search URL, and the wallpaper. Changes apply live and are saved to
+`~/.config/mac-lucent/settings.json` (hand-editable; unknown or missing keys are ignored).
+
+### Adding a new app
 
 1. Create a class conforming to `TileApp` (provide a `view`, `title`, `symbolName`, `focus()`, `shutdown()`).
 2. Register it in `AppRegistry.apps` in `Apps/TileApp.swift`.
 
-It then shows up in the launcher (⌘ D) and tiles like any other window. A settings app
-can edit `Config.shared` and call `Config.shared.notifyChanged()` to apply changes live.
+It then shows up in the launcher (⌘ D) and tiles like any other window. Set `singleInstance: true`
+on its `AppDescriptor` to focus the existing window instead of opening another (as Settings does).
+Apps can read `Config.shared` and observe `.configDidChange` to react to settings changes.
 
 ### Customising
 
-- Wallpaper: put an image at `~/.config/mac-lucent/wallpaper.png`.
+- Wallpaper: choose one in Settings, or put an image at `~/.config/mac-lucent/wallpaper.png`.
 - Fonts: the terminal uses the first installed of JetBrainsMono Nerd Font, MesloLGS NF,
   FiraCode Nerd Font, SF Mono, Menlo.
 - Shell: uses Homebrew bash (`/opt/homebrew/bin/bash`) if installed, otherwise `/bin/bash`.

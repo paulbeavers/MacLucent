@@ -4,6 +4,8 @@ import QuartzCore
 /// The "window" decoration: rounded corners, gradient border, shadow. Hosts a TileApp's view.
 final class TileWindow: NSView {
     let app: TileApp
+    /// The AppRegistry id this window was launched from, if any.
+    var appID: String?
     private let gradient = CAGradientLayer()
     private let borderMask = CAShapeLayer()
     private let content = NSView()
