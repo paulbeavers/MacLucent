@@ -28,7 +28,8 @@ final class DesktopView: NSView {
     override func layout() {
         super.layout()
         let c = Config.shared
-        let windowed = !(window?.styleMask.contains(.fullScreen) ?? true)
+        let mask = window?.styleMask ?? []
+        let windowed = mask.contains(.titled) && !mask.contains(.fullScreen)
         let leftInset: CGFloat = windowed ? 72 : 0 // keep clear of the traffic lights
         wallpaper.frame = bounds
         bar.frame = CGRect(x: c.gapsOut + leftInset, y: c.barMargin,

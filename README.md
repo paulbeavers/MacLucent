@@ -13,8 +13,9 @@ Requires Xcode / Swift 5.9+ and macOS 13+.
 open build/mac-lucent.app
 ```
 
-The app opens in native full screen with one terminal. Use `--windowed` to start
-in a regular window. During development, `swift run mac-lucent --windowed` works too.
+The app covers the whole screen (borderless window, menu bar and Dock auto-hidden) and
+starts with one terminal. Use `--windowed` for a regular window, or `--native-fullscreen`
+for macOS full screen. During development, `swift run mac-lucent --windowed` works too.
 
 ## Keybindings (⌘ is the "Super" key)
 
@@ -78,6 +79,16 @@ can edit `Config.shared` and call `Config.shared.notifyChanged()` to apply chang
 - Fonts: the terminal uses the first installed of JetBrainsMono Nerd Font, MesloLGS NF,
   FiraCode Nerd Font, SF Mono, Menlo.
 - Shell: uses Homebrew bash (`/opt/homebrew/bin/bash`) if installed, otherwise `/bin/bash`.
+
+### Performance notes
+
+- SwiftTerm is pinned to **1.10.1** (CoreGraphics renderer on the normal AppKit display cycle).
+  The 1.99.x pre-releases add an off-main render loop that stalled 150–300 ms on real typing;
+  1.11–1.20 need the Metal toolchain (`xcodebuild -downloadComponent MetalToolchain`) to build.
+- Live blur is off by default; `ML_BLUR=1` turns on NSVisualEffectView blur behind terminals and the bar.
+- `ML_LATENCY_LOG=1` logs per-keystroke latency (deliver / echo / drawn) to
+  `~/Library/Logs/mac-lucent/latency.log`; `--bench-typing` runs a synthetic typing benchmark
+  (`ML_BENCH_INTERVAL` sets the gap between keys).
 
 ### Debug flags
 

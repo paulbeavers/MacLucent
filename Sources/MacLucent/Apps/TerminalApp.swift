@@ -4,7 +4,7 @@ import SwiftTerm
 /// A terminal window running bash in a real PTY.
 final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
     let view: NSView
-    let terminal: LocalProcessTerminalView
+    let terminal: LucentTerminalView
     private(set) var title = "bash"
     private(set) var currentDirectory: String?
     var symbolName: String { "terminal" }
@@ -15,20 +15,17 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
 
     init(directory: String? = nil) {
         let c = Config.shared
-        let effect = PaddedContainer()
-        effect.material = .hudWindow
-        effect.blendingMode = .withinWindow
-        effect.state = .active
-        effect.appearance = NSAppearance(named: .darkAqua)
-        effect.wantsLayer = true
+        let effect = PaddedContainer(blur: c.blur)
         effect.tint.layer?.backgroundColor = c.base.withAlphaComponent(c.terminalOpacity).cgColor
         view = effect
 
-        terminal = LocalProcessTerminalView(frame: CGRect(x: 0, y: 0, width: 800, height: 600))
+        terminal = LucentTerminalView(frame: CGRect(x: 0, y: 0, width: 800, height: 600))
         super.init()
 
         terminal.font = c.terminalFont()
         Self.applyTheme(to: terminal)
+        // Hyprland-style: no scrollbar (scroll with the trackpad / wheel).
+        terminal.subviews.compactMap { $0 as? NSScroller }.forEach { $0.isHidden = true }
         terminal.processDelegate = self
         terminal.optionAsMetaKey = true
         effect.content = terminal
@@ -80,11 +77,11 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
             0x585B70, 0xF38BA8, 0xA6E3A1, 0xF9E2AF, 0x89B4FA, 0xF5C2E7, 0x94E2D5, 0xA6ADC8,
         ]
         t.installColors(hex.map {
-            SwiftTerm.Color(red8: UInt16(($0 >> 16) & 0xFF), green8: UInt16(($0 >> 8) & 0xFF), blue8: UInt16($0 & 0xFF))
+            SwiftTerm.Color(red: UInt16(($0 >> 16) & 0xFF) * 257, green: UInt16(($0 >> 8) & 0xFF) * 257, blue: UInt16($0 & 0xFF) * 257)
         })
         t.nativeForegroundColor = c.text
-        t.nativeBackgroundColor = c.base
-        t.backgroundOpacity = 0 // the window's blurred background shows through
+        // Same translucent color as the container's tint, so the padding and text area match.
+        t.nativeBackgroundColor = c.base.withAlphaComponent(c.terminalOpacity)
         t.caretColor = NSColor(hex: 0xF5E0DC)
         t.selectedTextBackgroundColor = c.surface1
     }
@@ -146,13 +143,23 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
 }
 
 /// Blurred backdrop + tint, with the terminal inset by `padding`.
-final class PaddedContainer: NSVisualEffectView {
+final class PaddedContainer: NSView {
     let tint = NSView()
+    private let backdrop: NSVisualEffectView?
     weak var content: NSView?
     var padding: CGFloat = 8
 
-    override init(frame: NSRect) {
-        super.init(frame: frame)
+    init(blur: Bool) {
+        backdrop = blur ? NSVisualEffectView() : nil
+        super.init(frame: .zero)
+        wantsLayer = true
+        if let b = backdrop {
+            b.material = .hudWindow
+            b.blendingMode = .withinWindow
+            b.state = .active
+            b.appearance = NSAppearance(named: .darkAqua)
+            addSubview(b)
+        }
         tint.wantsLayer = true
         tint.autoresizingMask = [.width, .height]
         addSubview(tint)
@@ -162,6 +169,7 @@ final class PaddedContainer: NSVisualEffectView {
 
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
+        backdrop?.frame = bounds
         tint.frame = bounds
         let r = bounds.insetBy(dx: padding, dy: padding)
         content?.frame = r.width > 0 && r.height > 0 ? r : .zero

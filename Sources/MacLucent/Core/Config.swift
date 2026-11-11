@@ -34,6 +34,9 @@ final class Config {
     var shadow = true
     var inactiveDim: CGFloat = 0.0   // 0...1, how much inactive windows are dimmed
     var terminalOpacity: CGFloat = 0.86
+    /// Live background blur behind terminals and the bar (NSVisualEffectView). Costs window-server
+    /// compositing time on every redraw.
+    var blur = ProcessInfo.processInfo.environment["ML_BLUR"] != nil
 
     // animations
     var animationsEnabled = true

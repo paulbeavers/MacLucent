@@ -311,6 +311,9 @@ final class WindowManager {
     private func installMonitors() {
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
             guard let self else { return e }
+            if LatencyProbe.enabled {
+                LatencyProbe.keyReceived(e, terminal: (self.current.focused?.app as? TerminalApp)?.terminal)
+            }
             return self.handleKey(e) ? nil : e
         } as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] e in

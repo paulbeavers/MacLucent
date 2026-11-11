@@ -90,7 +90,7 @@ final class TileWindow: NSView {
                           transform: nil)
         borderMask.path = path
         borderMask.lineWidth = bw
-        if c.shadow, let layer {
+        if c.shadow, ProcessInfo.processInfo.environment["ML_NO_SHADOW"] == nil, let layer {
             layer.shadowPath = CGPath(roundedRect: bounds, cornerWidth: c.rounding, cornerHeight: c.rounding, transform: nil)
             layer.shadowColor = NSColor.black.cgColor
             layer.shadowOpacity = 0.45

@@ -11,9 +11,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.mainMenu = buildMenu()
 
         let screen = NSScreen.main ?? NSScreen.screens[0]
-        window = NSWindow(contentRect: screen.visibleFrame,
-                          styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-                          backing: .buffered, defer: false)
+        let args = CommandLine.arguments
+        // Default: a borderless window covering the whole screen with the menu bar and Dock
+        // auto-hidden. macOS native full screen (`--native-fullscreen`) adds up to several hundred
+        // ms of compositing latency to terminal redraws after idle, so it is opt-in only.
+        let covering = !args.contains("--windowed") && !args.contains("--native-fullscreen")
+        window = MainWindow(contentRect: covering ? screen.frame : screen.visibleFrame,
+                            styleMask: covering ? [.borderless, .miniaturizable]
+                                                : [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                            backing: .buffered, defer: false)
         window.title = "mac-lucent"
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
@@ -30,10 +36,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         manager = WindowManager(desktop: desktop)
         desktop.onOverlayDismissed = { [weak self] in self?.manager.overlayDismissed() }
 
-        window.setFrame(screen.visibleFrame, display: true)
+        window.setFrame(covering ? screen.frame : screen.visibleFrame, display: true)
+        if covering {
+            NSApp.presentationOptions = [.autoHideMenuBar, .autoHideDock]
+            NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
+                                                   object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let s = self.window.screen ?? NSScreen.main else { return }
+                    self.window.setFrame(s.frame, display: true)
+                }
+            }
+        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        if !CommandLine.arguments.contains("--windowed") {
+        if args.contains("--native-fullscreen") {
             window.toggleFullScreen(nil)
         }
         manager.launch("terminal")
@@ -55,6 +71,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         if let i = args.firstIndex(of: "--workspace"), i + 1 < args.count, let n = Int(args[i + 1]) {
             manager.switchTo(n)
+        }
+        if args.contains("--bench-typing") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in
+                guard let self else { return }
+                TypingBenchmark.run(window: self.window)
+            }
         }
         if args.contains("--launcher") { manager.showLauncher() }
         if args.contains("--help-overlay") { desktop.showOverlay(HelpOverlay()) }
@@ -156,6 +178,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func newBrowser() { manager.launch("browser") }
     @objc private func showLauncher() { manager.showLauncher() }
     @objc private func showHelp() { desktop.showOverlay(HelpOverlay()) }
+}
+
+/// Borderless windows can't become key by default; ours must, to receive keyboard input.
+final class MainWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
 }
 
 /// Programmatic app icon: three gradient-bordered tiles on a dark squircle.

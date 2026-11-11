@@ -8,7 +8,8 @@ let package = Package(
         .executable(name: "mac-lucent", targets: ["MacLucent"])
     ],
     dependencies: [
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.2.0")
+        // 1.99.x (pre-2.0) introduced an off-main render loop that stalls 150–300 ms on real typing.
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", exact: "1.10.1")
     ],
     targets: [
         .executableTarget(

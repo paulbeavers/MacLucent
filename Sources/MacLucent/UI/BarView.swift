@@ -43,9 +43,9 @@ final class BarView: NSView {
         background.blendingMode = .withinWindow
         background.state = .active
         background.appearance = NSAppearance(named: .darkAqua)
-        addSubview(background)
+        if c.blur { addSubview(background) }
         tint.wantsLayer = true
-        tint.layer?.backgroundColor = c.crust.withAlphaComponent(0.55).cgColor
+        tint.layer?.backgroundColor = c.crust.withAlphaComponent(c.blur ? 0.55 : 0.85).cgColor
         addSubview(tint)
 
         logo.image = NSImage(systemSymbolName: "square.grid.2x2.fill", accessibilityDescription: nil)
@@ -162,17 +162,23 @@ final class WorkspacePill: NSView {
     let index: Int
     var onClick: (() -> Void)?
     var state = BarView.WorkspaceState(index: 0, occupied: false, active: false) {
-        didSet { needsDisplay = true }
+        didSet { needsDisplay = true; updateLabel() }
     }
     private var hovering = false {
         didSet { needsDisplay = true }
     }
+    private let label = NSTextField(labelWithString: "")
 
     override var isFlipped: Bool { true }
 
     init(index: Int) {
         self.index = index
         super.init(frame: .zero)
+        label.stringValue = "\(index)"
+        label.font = Config.shared.monoUIFont(10.5, weight: .bold)
+        label.alignment = .center
+        addSubview(label)
+        updateLabel()
         addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect],
                                        owner: self, userInfo: nil))
     }
@@ -193,13 +199,22 @@ final class WorkspacePill: NSView {
         } else if state.occupied {
             c.surface0.setFill(); path.fill()
         }
-        let color: NSColor = state.active ? c.crust : (state.occupied ? c.text : c.overlay0)
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: c.monoUIFont(10.5, weight: .bold),
-            .foregroundColor: color,
-        ]
-        let s = NSAttributedString(string: "\(index)", attributes: attrs)
-        let size = s.size()
-        s.draw(at: CGPoint(x: (bounds.width - size.width) / 2, y: (bounds.height - size.height) / 2))
+    }
+
+    private func updateLabel() {
+        let c = Config.shared
+        label.textColor = state.active ? c.crust : (state.occupied ? c.text : c.overlay0)
+    }
+
+    override func layout() {
+        super.layout()
+        label.sizeToFit()
+        let h = label.frame.height
+        label.frame = CGRect(x: 0, y: (bounds.height - h) / 2, width: bounds.width, height: h)
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        needsLayout = true
     }
 }
