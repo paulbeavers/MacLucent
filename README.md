@@ -25,6 +25,7 @@ for a regular window, or `--borderless` to cover the current Space without a ful
 | ⌘ B | New browser |
 | ⌘ D | App launcher |
 | ⌘ , | Settings |
+| ⌘ I | Stats |
 | ⌘ W | Close window |
 | ⌘ ← ↑ ↓ → | Move focus |
 | ⌘ ⇧ ← ↑ ↓ → | Swap window with neighbour (floating: move it) |
@@ -90,7 +91,7 @@ search URL, and the wallpaper. Changes apply live and are saved to
 
 ### Stats
 
-Launcher (⌘ D) → **Stats** opens a live dashboard, refreshed every second: mac-lucent's version,
+⌘ I (or launcher → **Stats**) opens a live dashboard, refreshed every second: mac-lucent's version,
 git commit and uptime; CPU and memory of mac-lucent itself and of the shells in its terminals
 (including everything they started), with 60-second sparklines (hover for values); system CPU,
 memory, disk and load; per-workspace window counts and modes; and per-terminal process counts.

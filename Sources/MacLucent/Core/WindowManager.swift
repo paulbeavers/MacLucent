@@ -552,6 +552,7 @@ final class WindowManager {
             case (36, _), (76, _): launch("terminal"); return true
             case (_, "b"): launch("browser"); return true
             case (_, ","): launch("settings"); return true
+            case (_, "i"): launch("stats"); return true
             case (_, "d"): showLauncher(); return true
             case (_, "w"): closeFocused(); return true
             case (_, "f"): toggleFullscreen(); return true

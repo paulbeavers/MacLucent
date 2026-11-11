@@ -135,6 +135,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         appMenu.addItem(withTitle: "About mac-lucent", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(item("Settings…", #selector(openSettings), ","))
+        appMenu.addItem(item("Stats", #selector(openStats), "i"))
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Hide mac-lucent", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         let others = appMenu.addItem(withTitle: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
@@ -187,6 +188,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func newBrowser() { manager.launch("browser") }
     @objc private func showLauncher() { manager.showLauncher() }
     @objc private func openSettings() { manager.launch("settings") }
+    @objc private func openStats() { manager.launch("stats") }
     @objc private func showHelp() { desktop.showOverlay(HelpOverlay()) }
 }
 

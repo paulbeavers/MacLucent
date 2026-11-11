@@ -53,7 +53,7 @@ enum AppRegistry {
         AppDescriptor(id: "settings", name: "Settings", symbolName: "gearshape", shortcut: "⌘,", singleInstance: true) { _ in
             SettingsApp()
         },
-        AppDescriptor(id: "stats", name: "Stats", symbolName: "chart.xyaxis.line", shortcut: "", singleInstance: true) { wm in
+        AppDescriptor(id: "stats", name: "Stats", symbolName: "chart.xyaxis.line", shortcut: "⌘I", singleInstance: true) { wm in
             StatsApp(manager: wm)
         },
     ]
