@@ -13,9 +13,9 @@ Requires Xcode / Swift 5.9+ and macOS 13+.
 open build/mac-lucent.app
 ```
 
-The app covers the whole screen (borderless window, menu bar and Dock auto-hidden) and
-starts with one terminal. Use `--windowed` for a regular window, or `--native-fullscreen`
-for macOS full screen. During development, `swift run mac-lucent --windowed` works too.
+The app opens in macOS full screen — its own Space, so it shows up as a page in Mission
+Control (⌃↑) and you can swipe to and from it — and starts with one terminal. Use `--windowed`
+for a regular window, or `--borderless` to cover the current Space without a full-screen Space. During development, `swift run mac-lucent --windowed` works too.
 
 ## Keybindings (⌘ is the "Super" key)
 

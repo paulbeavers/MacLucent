@@ -13,10 +13,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let screen = NSScreen.main ?? NSScreen.screens[0]
         let args = CommandLine.arguments
-        // Default: a borderless window covering the whole screen with the menu bar and Dock
-        // auto-hidden. macOS native full screen (`--native-fullscreen`) adds up to several hundred
-        // ms of compositing latency to terminal redraws after idle, so it is opt-in only.
-        let covering = !args.contains("--windowed") && !args.contains("--native-fullscreen")
+        // Default: macOS native full screen, so mac-lucent gets its own Space (a page in Mission
+        // Control / ⌃↑, swipeable like any full-screen app). `--borderless` instead covers the
+        // current Space with a borderless window (menu bar and Dock auto-hidden); `--windowed`
+        // opens a normal window.
+        let covering = args.contains("--borderless")
+        let nativeFullScreen = !covering && !args.contains("--windowed")
         window = MainWindow(contentRect: covering ? screen.frame : screen.visibleFrame,
                             styleMask: covering ? [.borderless, .miniaturizable]
                                                 : [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -54,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }
-        if args.contains("--native-fullscreen") {
+        if nativeFullScreen {
             window.toggleFullScreen(nil)
         }
         manager.launch("terminal")
