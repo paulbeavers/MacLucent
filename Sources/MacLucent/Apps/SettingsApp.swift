@@ -46,6 +46,8 @@ final class SettingsApp: NSObject, TileApp {
         popup("Modifier key", options: ["Command (⌘)", "Option (⌥)"],
               get: { self.c.modifierKey == .option ? "Option (⌥)" : "Command (⌘)" },
               set: { self.c.modifierKey = $0.hasPrefix("Option") ? .option : .command })
+        toggle("Restore windows on launch", note: "Workspaces, layouts, terminal folders and browser tabs",
+               get: { self.c.restoreSession }, set: { self.c.restoreSession = $0 })
         toggle("Focus follows mouse", get: { self.c.focusFollowsMouse }, set: { self.c.focusFollowsMouse = $0 })
         toggle("Raise on hover", note: "Floating workspaces: hovered window comes to the front",
                get: { self.c.raiseOnHover }, set: { self.c.raiseOnHover = $0 })

@@ -97,6 +97,13 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         return c
     }
 
+    /// Restore a browser with several tabs (session restore).
+    convenience init(manager: WindowManager?, urls: [String], activeTab: Int) {
+        self.init(manager: manager, url: urls.first)
+        for u in urls.dropFirst() { newTab(url: u, select: false, atEnd: true) }
+        selectTab(min(max(0, activeTab), tabs.count - 1))
+    }
+
     init(manager: WindowManager?, url: String? = nil) {
         self.manager = manager
         let container = FlippedView()
@@ -123,15 +130,15 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
 
     @discardableResult
     func newTab(url: String? = nil, configuration: WKWebViewConfiguration? = nil, select: Bool = true,
-                focusAddressBar: Bool = false) -> BrowserTab {
+                focusAddressBar: Bool = false, atEnd: Bool = false) -> BrowserTab {
         let tab = BrowserTab(configuration: configuration ?? Self.makeConfiguration())
         tab.webView.navigationDelegate = self
         tab.webView.uiDelegate = self
         tab.onChange = { [weak self] tab, change in self?.tabChanged(tab, change) }
         tab.webView.isHidden = true
         view.addSubview(tab.webView)
-        // Open next to the current tab, like Safari.
-        let index = tabs.isEmpty ? 0 : activeIndex + 1
+        // Open next to the current tab, like Safari (or at the end when restoring).
+        let index = tabs.isEmpty ? 0 : (atEnd ? tabs.count : activeIndex + 1)
         tabs.insert(tab, at: index)
         if !select, index <= activeIndex { activeIndex += 1 }
         if let url, let u = Self.resolve(url) { tab.webView.load(URLRequest(url: u)) }

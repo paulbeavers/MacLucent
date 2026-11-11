@@ -4,6 +4,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow!
     private var menuModifier = Config.shared.modifierKey
+    private var sessionTimer: Timer?
     private var desktop: DesktopView!
     private(set) var manager: WindowManager!
 
@@ -69,7 +70,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if nativeFullScreen {
             window.toggleFullScreen(nil)
         }
-        manager.launch("terminal")
+        if !manager.restoreSession() {
+            manager.launch("terminal")
+        }
+        // Autosave so a crash or force-quit loses at most a few seconds of layout.
+        sessionTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.manager.saveSession() }
+        }
         runDebugArguments()
     }
 
@@ -130,6 +137,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        manager.saveSession() // before shutting windows down
         manager.allWindows.forEach { $0.app.shutdown() }
     }
 

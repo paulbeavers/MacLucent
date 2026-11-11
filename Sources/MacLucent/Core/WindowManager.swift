@@ -71,15 +71,49 @@ final class WindowManager {
         open(d.make(self)).appID = id
     }
 
-    @discardableResult
-    func open(_ app: TileApp, on ws: Workspace? = nil) -> TileWindow {
-        let ws = ws ?? current
+    /// A window for `app`, wired to the manager (title updates, self-close).
+    private func makeTile(_ app: TileApp) -> TileWindow {
         let w = TileWindow(app: app)
         app.onTitleChange = { [weak self] in self?.updateBar() }
         app.onRequestClose = { [weak self, weak w] in
             guard let self, let w else { return }
             self.close(w)
         }
+        return w
+    }
+
+    /// Session restore: add a tile to `ws` without inserting it into the tiling tree (the
+    /// caller rebuilds the tree, then calls `finishRestore`).
+    func adoptRestoredTile(_ app: TileApp, appID: String?, in ws: Workspace) -> TileWindow {
+        let w = makeTile(app)
+        w.appID = appID
+        ws.view.addSubview(w)
+        return w
+    }
+
+    /// Lay out every restored workspace and switch to the saved one.
+    func finishRestore(currentWorkspace: Int) {
+        desktop.layoutSubtreeIfNeeded()
+        for ws in workspaces where !ws.isEmpty {
+            ws.view.frame = desktop.stage.bounds
+            relayout(ws, animated: false)
+            for w in ws.windows { w.isActive = w === ws.focused }
+        }
+        if currentWorkspace != current.index, workspaces.contains(where: { $0.index == currentWorkspace }) {
+            let animations = config.animationsEnabled
+            config.animationsEnabled = false
+            switchTo(currentWorkspace)
+            config.animationsEnabled = animations
+        } else if let f = current.focused ?? current.windows.first {
+            focus(f)
+        }
+        updateBar()
+    }
+
+    @discardableResult
+    func open(_ app: TileApp, on ws: Workspace? = nil) -> TileWindow {
+        let ws = ws ?? current
+        let w = makeTile(app)
         desktop.layoutSubtreeIfNeeded()
         ws.view.frame = desktop.stage.bounds
         ws.tree.layout(in: ws.view.bounds) // fresh rects so dwindle picks the right split axis

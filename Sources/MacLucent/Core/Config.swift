@@ -64,6 +64,7 @@ struct SettingsFile: Codable {
     var wallpaperPath: String?
     var floatingWorkspaces: [Int]?
     var modifierKey: String?
+    var restoreSession: Bool?
 }
 
 /// Runtime configuration, modelled on hyprland.conf's `general`, `decoration` and
@@ -79,6 +80,8 @@ final class Config {
     var activeBorder: [NSColor] = [NSColor(hex: 0x33CCFF, alpha: 0.93), NSColor(hex: 0x00FF99, alpha: 0.93)]
     var inactiveBorder = NSColor(hex: 0x595959, alpha: 0.67)
     var focusFollowsMouse = false
+    /// Reopen the previous session's workspaces, layouts, terminals and browser tabs at launch.
+    var restoreSession = true
     /// ⌘ (default) or ⌥ for all mac-lucent shortcuts. Standard macOS ones (copy/paste, quit) stay on ⌘.
     var modifierKey: ModifierKey = .command
     var mod: NSEvent.ModifierFlags { modifierKey == .option ? .option : .command }
@@ -184,7 +187,7 @@ final class Config {
             workspaceAnimationDuration: workspaceAnimationDuration, homepage: homepage, searchURL: searchURL,
             terminalFontSize: terminalFontSize, terminalFontFamily: terminalFontFamily ?? "",
             wallpaperPath: wallpaperPath ?? "", floatingWorkspaces: floatingWorkspaces.sorted(),
-            modifierKey: modifierKey.rawValue)
+            modifierKey: modifierKey.rawValue, restoreSession: restoreSession)
     }
 
     func apply(_ f: SettingsFile) {
@@ -211,6 +214,7 @@ final class Config {
         if let v = f.wallpaperPath { wallpaperPath = v.isEmpty ? nil : v }
         if let v = f.floatingWorkspaces { floatingWorkspaces = Set(v) }
         if let v = f.modifierKey.flatMap(ModifierKey.init(rawValue:)) { modifierKey = v }
+        if let v = f.restoreSession { restoreSession = v }
     }
 
     /// Load saved settings, if any. Call once at launch, before any views are built.

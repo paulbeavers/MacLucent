@@ -92,6 +92,16 @@ them in Settings → Workspaces; the choice is saved. On a floating workspace wi
 The tiled arrangement is kept while a workspace floats, so switching back restores it, and each
 window remembers its floating position for next time.
 
+### Session restore
+
+When you quit (and every 15 seconds while running), mac-lucent saves your session to
+`~/.config/mac-lucent/session.json`: each workspace's tiling layout (split directions and sizes),
+floating window positions, terminal folders, browser tabs (and the selected tab), Settings/Stats
+windows, the focused window and the current workspace. On launch it's rebuilt exactly. Terminals
+reopen in their folder with a fresh shell — running programs can't be restored. Turn it off in
+Settings → General → **Restore windows on launch**. (Scripted test runs — `ML_BACKGROUND`,
+`--snapshot` — never read or write the session; `ML_SESSION_FILE=<path>` points at another file.)
+
 ### Settings
 
 ⌘ , (or the launcher) opens the Settings app: floating workspaces, gaps, border size and colors, rounding, shadow,

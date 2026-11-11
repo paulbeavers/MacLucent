@@ -54,6 +54,13 @@ final class LayoutTree {
     var windows: [TileWindow] { root?.leaves().compactMap { $0.window } ?? [] }
     var isEmpty: Bool { root == nil }
 
+    /// Replace the whole tree (session restore).
+    func setRoot(_ node: LayoutNode?) {
+        root = node
+        node?.parent = nil
+        rects = [:]
+    }
+
     func leaf(for window: TileWindow) -> LayoutNode? {
         root?.leaves().first { $0.window === window }
     }
