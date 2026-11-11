@@ -1,11 +1,18 @@
 import AppKit
 import SwiftTerm
 
-/// Terminal view with a hook for incoming shell output (used by the latency probe).
+/// Terminal view that filters PTY output (see `TerminalOutputFilter`) and exposes an output hook.
 final class LucentTerminalView: LocalProcessTerminalView {
     var onData: (() -> Void)?
+    private var outputFilter = TerminalOutputFilter()
+    /// Debug aid: `ML_PTY_LOG=<file>` records the raw shell output.
+    static let ptyLog: FileHandle? = ProcessInfo.processInfo.environment["ML_PTY_LOG"].flatMap { p in
+        FileManager.default.createFile(atPath: p, contents: nil); return FileHandle(forWritingAtPath: p) }
+
     override func dataReceived(slice: ArraySlice<UInt8>) {
-        super.dataReceived(slice: slice)
+        Self.ptyLog?.write(Data(slice))
+        let filtered = outputFilter.filter(slice)
+        if !filtered.isEmpty { super.dataReceived(slice: filtered) }
         onData?()
     }
 }

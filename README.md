@@ -109,6 +109,10 @@ Apps can read `Config.shared` and observe `.configDidChange` to react to setting
   The 1.99.x pre-releases add an off-main render loop that stalled 150–300 ms on real typing;
   1.11–1.20 need the Metal toolchain (`xcodebuild -downloadComponent MetalToolchain`) to build.
 - Live blur is off by default; `ML_BLUR=1` turns on NSVisualEffectView blur behind terminals and the bar.
+- SwiftTerm 1.10.1 treats every `CSI … u` as "restore cursor", which broke kitty-keyboard-aware
+  TUIs such as Claude Code (redraws landed at the top of the window). `TerminalOutputFilter`
+  strips those sequences from shell output; `ML_PTY_LOG=<file>` records raw output for debugging.
+- `ML_BACKGROUND=1` launches without taking keyboard focus (for scripted test runs).
 - `ML_LATENCY_LOG=1` logs per-keystroke latency (deliver / echo / drawn) to
   `~/Library/Logs/mac-lucent/latency.log`; `--bench-typing` runs a synthetic typing benchmark
   (`ML_BENCH_INTERVAL` sets the gap between keys).

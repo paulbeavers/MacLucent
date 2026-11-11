@@ -48,8 +48,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 }
             }
         }
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        if ProcessInfo.processInfo.environment["ML_BACKGROUND"] != nil {
+            window.orderBack(nil) // test runs: don't take keyboard focus from the user
+        } else {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
         if args.contains("--native-fullscreen") {
             window.toggleFullScreen(nil)
         }
