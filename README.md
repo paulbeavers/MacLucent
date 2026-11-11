@@ -60,6 +60,7 @@ Sources/MacLucent/
   Apps/
     TileApp.swift       the protocol every app implements + AppRegistry
     TerminalApp.swift   SwiftTerm terminal running bash
+    StatsApp.swift      live stats dashboard (SystemStats.swift samples the numbers)
     BrowserApp.swift    WKWebView browser with address bar
   UI/
     DesktopView.swift   wallpaper, stage, overlay host
@@ -86,6 +87,15 @@ window remembers its floating position for next time.
 inactive dimming, terminal opacity and font, blur, animation speeds, browser home page and
 search URL, and the wallpaper. Changes apply live and are saved to
 `~/.config/mac-lucent/settings.json` (hand-editable; unknown or missing keys are ignored).
+
+### Stats
+
+Launcher (⌘ D) → **Stats** opens a live dashboard, refreshed every second: mac-lucent's version,
+git commit and uptime; CPU and memory of mac-lucent itself and of the shells in its terminals
+(including everything they started), with 60-second sparklines (hover for values); system CPU,
+memory, disk and load; per-workspace window counts and modes; and per-terminal process counts.
+WebKit's web-content processes run outside mac-lucent's process tree, so browser page memory
+isn't included in the mac-lucent figures.
 
 ### Adding a new app
 
