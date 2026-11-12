@@ -50,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.appearance = Config.shared.appearance
         window.acceptsMouseMovedEvents = true
         window.isReleasedWhenClosed = false
+        window.isRestorable = false // Lucent restores its own session
         window.minSize = NSSize(width: 640, height: 400)
         window.delegate = self
 

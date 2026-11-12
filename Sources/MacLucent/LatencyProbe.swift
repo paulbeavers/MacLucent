@@ -11,9 +11,37 @@ final class LucentTerminalView: LocalProcessTerminalView {
 
     override func dataReceived(slice: ArraySlice<UInt8>) {
         Self.ptyLog?.write(Data(slice))
+        if outputFilter.onWindowOp == nil {
+            outputFilter.onWindowOp = { [weak self] params in
+                MainActor.assumeIsolated { self?.answerWindowOp(params) }
+            }
+        }
         let filtered = outputFilter.filter(slice)
         if !filtered.isEmpty { super.dataReceived(slice: filtered) }
         onData?()
+    }
+
+    /// Answer XTWINOPS size queries ourselves (SwiftTerm 1.10.1 crashes on window operations —
+    /// see TerminalOutputFilter). Everything else (move/resize/iconify, title stack) is ignored.
+    private func answerWindowOp(_ p: [Int]) {
+        let t = getTerminal()
+        let scale = window?.backingScaleFactor ?? 2
+        let cellW = font.advancement(forGlyph: font.glyph(withName: "W")).width
+        let cellH = ceil(font.ascender - font.descender + font.leading)
+        let cw = Int((cellW * scale).rounded()), ch = Int((cellH * scale).rounded())
+        let esc = "\u{1B}["
+        switch p.first ?? 0 {
+        case 14: send(txt: "\(esc)4;\(ch * t.rows);\(cw * t.cols)t")        // text area, pixels
+        case 15:
+            let s = (window?.screen ?? NSScreen.main)?.frame.size ?? .zero
+            send(txt: "\(esc)5;\(Int(s.height * scale));\(Int(s.width * scale))t") // screen, pixels
+        case 16: send(txt: "\(esc)6;\(ch);\(cw)t")                          // cell size, pixels
+        case 18: send(txt: "\(esc)8;\(t.rows);\(t.cols)t")                  // text area, characters
+        case 19: send(txt: "\(esc)9;\(t.rows);\(t.cols)t")                  // screen, characters
+        case 20: send(txt: "\u{1B}]L\u{1B}\\")                              // icon label (empty, by design)
+        case 21: send(txt: "\u{1B}]l\u{1B}\\")                              // title (empty, by design)
+        default: break
+        }
     }
 }
 

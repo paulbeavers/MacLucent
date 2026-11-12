@@ -83,6 +83,13 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   and zsh as login shell; a plain login bash skipped it and looked bare), then prepends
   `__lucent_osc7` to PROMPT_COMMAND (passing PROMPT_COMMAND via env was overwritten by the user's
   rc). Don't edit the user's dotfiles to fix shell setup.
+- **Window operations (`CSI Ps;… t`, XTWINOPS) never reach SwiftTerm.** In this build its
+  `windowCommand` traps with "unexpected enum case" (Neovim sends `CSI 22;0;0t` at startup — it
+  crashed Lucent). `TerminalOutputFilter` removes them and `LucentTerminalView.answerWindowOp`
+  answers the size queries (14/15/16/18/19, 20/21 empty); move/resize/title-stack are ignored.
+- **macOS window restoration is off** (`ApplePersistenceIgnoreState`, `isRestorable = false`):
+  Lucent restores its own session, and after a crash macOS otherwise blocks the next launch with
+  a modal "reopen windows?" alert (it froze a test instance on the user's screen).
 - **Terminal scroller hidden**; terminal tint only fills the padding ring (no double alpha).
 - **Overlays on top of app content must not take mouse events.** AppKit hit-tests views even at
   `alphaValue` 0: `TileWindow`'s inactive-dim view covered every tile and swallowed mouse-wheel
