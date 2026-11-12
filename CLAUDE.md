@@ -96,9 +96,17 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   tiles stopped delivering those drags (user: "any horizontal resize does not work — it used to").
   The monitor sees every event first, so it works whatever is under the pointer. The grab zone
   (`LayoutTree` divider rects) covers the gap plus 5 px into each tile, so grabbing a border works;
-  the resize cursor is set (deferred) from the mouse-moved monitor. Note: synthetic drag events
-  sent with `NSApp.sendEvent` are NOT routed to a view's `mouseDragged` — test drags through the
-  monitors (which do see them), or call the handlers directly.
+  the resize cursor is set (deferred) from the mouse-moved monitor. Symptom before the fix: in a
+  four-pane dwindle layout only the root (left) vertical border could be dragged; nested borders
+  (the horizontal one, and the vertical one between the bottom-right tiles) ignored the mouse.
+  Verified after the fix: every border in a four-pane layout drags from its middle, near its ends,
+  and on a tile's own border (9/9 in the test below).
+- **Testing drags:** synthetic events sent with `NSApp.sendEvent` reach the local event monitors
+  (so split and floating drags can be tested end to end) but are NOT routed to a view's
+  `mouseDragged`. In a multi-border test, re-read `ws.tree.dividers` before each drag — every drag
+  relayouts and moves the other borders, so rects captured up front go stale and the next grab
+  misses (that produced false failures once). Pattern: launch 3 extra terminals (4 panes), then for
+  each divider index send leftMouseDown / leftMouseDragged×4 / leftMouseUp and check `node.ratio`.
 - **Overlays on top of app content must not take mouse events.** AppKit hit-tests views even at
   `alphaValue` 0: `TileWindow`'s inactive-dim view covered every tile and swallowed mouse-wheel
   scrolling (trackpad and Page Up/Down still worked, which hid it). It is now a
