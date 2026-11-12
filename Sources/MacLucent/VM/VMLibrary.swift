@@ -14,21 +14,94 @@ struct VMConfig: Codable, Equatable {
     var created: Date
 }
 
-/// Linux cloud images Lucent can create VMs from. Raw ARM64 disk images (what
-/// Virtualization.framework boots), set up on first boot by cloud-init.
-struct CloudImage {
+/// Linux cloud images Lucent can create VMs from: ARM64 images with cloud-init, converted to
+/// the raw disk format Virtualization.framework boots and cached in vms/images/.
+struct CloudImage: Sendable {
+    enum Family: Sendable { case debian, ubuntu, fedora, rhel, alpine }
+    enum Source: Sendable {
+        case url(String)
+        /// Newest Fedora Cloud "Generic" aarch64 qcow2 from fedoraproject.org/releases.json.
+        case fedoraLatest
+        /// Newest Alpine generic UEFI cloud-init aarch64 qcow2 from latest-stable.
+        case alpineLatest
+    }
+    enum Format: Sendable {
+        case tarXZ(member: String) // Debian: disk.raw inside a .tar.xz
+        case qcow2
+    }
+
     let id: String
     let name: String
-    let url: URL
-    /// The raw disk's path inside the downloaded archive.
-    let diskInArchive: String
+    let family: Family
+    let source: Source
+    let format: Format
+    /// Rough download size, shown in the New VM form.
+    let downloadMB: Int
 
-    static let all = [
-        CloudImage(id: "debian-13", name: "Debian 13 (trixie)",
-                   url: URL(string: "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-arm64.tar.xz")!,
-                   diskInArchive: "disk.raw"),
+    static let all: [CloudImage] = [
+        CloudImage(id: "debian-13", name: "Debian 13 (trixie)", family: .debian,
+                   source: .url("https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-arm64.tar.xz"),
+                   format: .tarXZ(member: "disk.raw"), downloadMB: 300),
+        CloudImage(id: "debian-12", name: "Debian 12 (bookworm)", family: .debian,
+                   source: .url("https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-arm64.tar.xz"),
+                   format: .tarXZ(member: "disk.raw"), downloadMB: 270),
+        CloudImage(id: "ubuntu-26.04", name: "Ubuntu 26.04 LTS", family: .ubuntu,
+                   source: .url("https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-arm64.img"),
+                   format: .qcow2, downloadMB: 700),
+        CloudImage(id: "ubuntu-24.04", name: "Ubuntu 24.04 LTS", family: .ubuntu,
+                   source: .url("https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-arm64.img"),
+                   format: .qcow2, downloadMB: 620),
+        CloudImage(id: "ubuntu-26.10", name: "Ubuntu 26.10", family: .ubuntu,
+                   source: .url("https://cloud-images.ubuntu.com/stonking/current/stonking-server-cloudimg-arm64.img"),
+                   format: .qcow2, downloadMB: 800),
+        CloudImage(id: "fedora", name: "Fedora Cloud (latest)", family: .fedora,
+                   source: .fedoraLatest, format: .qcow2, downloadMB: 550),
+        CloudImage(id: "rocky-10", name: "Rocky Linux 10", family: .rhel,
+                   source: .url("https://dl.rockylinux.org/pub/rocky/10/images/aarch64/Rocky-10-GenericCloud-Base.latest.aarch64.qcow2"),
+                   format: .qcow2, downloadMB: 520),
+        CloudImage(id: "alma-10", name: "AlmaLinux 10", family: .rhel,
+                   source: .url("https://repo.almalinux.org/almalinux/10/cloud/aarch64/images/AlmaLinux-10-GenericCloud-latest.aarch64.qcow2"),
+                   format: .qcow2, downloadMB: 470),
+        CloudImage(id: "alpine", name: "Alpine Linux (latest)", family: .alpine,
+                   source: .alpineLatest, format: .qcow2, downloadMB: 200),
     ]
     static func image(_ id: String) -> CloudImage? { all.first { $0.id == id } }
+
+    var isCached: Bool {
+        FileManager.default.fileExists(atPath: VMLibrary.imagesDirectory.appendingPathComponent("\(id).raw").path)
+    }
+
+    /// The download URL (looked up for the "latest" sources).
+    func resolveURL() async throws -> URL {
+        switch source {
+        case .url(let s):
+            return URL(string: s)!
+        case .fedoraLatest:
+            let (data, _) = try await VMLibrary.retrying { try await URLSession.shared.data(from: URL(string: "https://fedoraproject.org/releases.json")!) }
+            let list = (try JSONSerialization.jsonObject(with: data) as? [[String: Any]]) ?? []
+            let best = list.compactMap { e -> (Int, String)? in
+                guard e["arch"] as? String == "aarch64", e["variant"] as? String == "Cloud",
+                      let v = Int(e["version"] as? String ?? ""), let link = e["link"] as? String,
+                      link.contains("Cloud-Base-Generic"), link.hasSuffix(".qcow2") else { return nil }
+                return (v, link)
+            }.max { $0.0 < $1.0 }
+            guard let link = best?.1, let url = URL(string: link) else { throw VMError.message("Couldn't find the latest Fedora Cloud image") }
+            return url
+        case .alpineLatest:
+            let base = "https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/cloud/"
+            let (data, _) = try await VMLibrary.retrying { try await URLSession.shared.data(from: URL(string: base)!) }
+            let html = String(decoding: data, as: UTF8.self)
+            let re = try NSRegularExpression(pattern: #"generic_alpine-([0-9.]+)-aarch64-uefi-cloudinit-r([0-9]+)\.qcow2"#)
+            let names = re.matches(in: html, range: NSRange(html.startIndex..., in: html)).compactMap {
+                Range($0.range, in: html).map { String(html[$0]) }
+            }
+            // Highest version (numeric compare), then highest -rN.
+            guard let name = names.max(by: { $0.compare($1, options: .numeric) == .orderedAscending }) else {
+                throw VMError.message("Couldn't find the latest Alpine cloud image")
+            }
+            return URL(string: base + name)!
+        }
+    }
 }
 
 enum VMError: LocalizedError {
@@ -102,6 +175,18 @@ enum VMLibrary {
         return config
     }
 
+    /// Retry transient network failures (dropped connections, timeouts) a couple of times.
+    static func retrying<T>(_ attempts: Int = 3, _ body: () async throws -> T) async throws -> T {
+        var last: Error?
+        for i in 0..<attempts {
+            do { return try await body() } catch let e as URLError {
+                last = e
+                try await Task.sleep(nanoseconds: UInt64(i + 1) * 2_000_000_000)
+            }
+        }
+        throw last!
+    }
+
     static func slug(_ name: String) -> String {
         let s = name.lowercased().map { $0.isLetter || $0.isNumber ? $0 : "-" }
         let joined = String(s).split(separator: "-").joined(separator: "-")
@@ -116,15 +201,24 @@ enum VMLibrary {
         try fm.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
 
         progress("Downloading \(image.name)…", 0)
-        let archive = try await Downloader.download(image.url) { p in progress("Downloading \(image.name)…", p) }
+        let url = try await image.resolveURL()
+        let archive = try await retrying { try await Downloader.download(url) { p in progress("Downloading \(image.name)…", p) } }
         defer { try? fm.removeItem(at: archive) }
 
-        progress("Unpacking \(image.name)…", nil)
         let work = imagesDirectory.appendingPathComponent(".unpack-\(UUID().uuidString)")
         try fm.createDirectory(at: work, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: work) }
-        try run("/usr/bin/tar", ["-xJf", archive.path, "-C", work.path, image.diskInArchive])
-        try fm.moveItem(at: work.appendingPathComponent(image.diskInArchive), to: raw)
+        switch image.format {
+        case .tarXZ(let member):
+            progress("Unpacking \(image.name)…", nil)
+            try run("/usr/bin/tar", ["-xJf", archive.path, "-C", work.path, member])
+            try fm.moveItem(at: work.appendingPathComponent(member), to: raw)
+        case .qcow2:
+            progress("Converting \(image.name)…", 0)
+            let out = work.appendingPathComponent("disk.raw")
+            try QCOW2.convert(archive, to: out) { p in progress("Converting \(image.name)…", p) }
+            try fm.moveItem(at: out, to: raw)
+        }
         return raw
     }
 
@@ -139,29 +233,60 @@ enum VMLibrary {
         defer { try? fm.removeItem(at: work) }
 
         let keys = sshPublicKeys().map { "      - \($0)" }.joined(separator: "\n")
+        let family = CloudImage.image(c.image)?.family ?? .debian
+        let indentedScript = consoleScript.split(separator: "\n").map { "      " + $0 }.joined(separator: "\n")
+        // Console autologin on hvc0: a systemd drop-in, or (Alpine, busybox init) an inittab line.
+        let consoleSetup: String
+        if family == .alpine {
+            consoleSetup = """
+            packages: [bash, sudo]
+            write_files:
+              - path: /usr/local/bin/lucent-autologin
+                permissions: "0755"
+                content: |
+                  #!/bin/sh
+                  exec /bin/login -f \(c.user)
+              - path: /etc/profile.d/lucent-console.sh
+                content: |
+            \(indentedScript)
+            runcmd:
+              - sed -i '/^hvc0:/d' /etc/inittab
+              - echo 'hvc0::respawn:/sbin/getty -n -l /usr/local/bin/lucent-autologin 38400 hvc0 vt100' >> /etc/inittab
+              - kill -HUP 1
+            """
+        } else {
+            consoleSetup = """
+            write_files:
+              - path: /etc/systemd/system/serial-getty@hvc0.service.d/lucent-autologin.conf
+                content: |
+                  [Service]
+                  ExecStart=
+                  ExecStart=-/sbin/agetty --autologin \(c.user) --keep-baud 115200,57600,38400,9600 %I $TERM
+              - path: /etc/profile.d/lucent-console.sh
+                content: |
+            \(indentedScript)
+            runcmd:
+              - [systemctl, daemon-reload]
+              - [systemctl, restart, serial-getty@hvc0.service]
+            """
+        }
+        // No usable password. Alpine's OpenSSH (no PAM) refuses *any* login, keys included, for a
+        // locked ("!") account, so there the hash is "*" (invalid, but not locked).
+        let passwordLines = family == .alpine
+            ? "    lock_passwd: false\n    hashed_passwd: \"*\""
+            : "    lock_passwd: true"
+        // No group membership: the sudo rule works on every distro (sudo vs wheel groups).
         let userData = """
         #cloud-config
         hostname: \(c.id)
         users:
           - name: \(c.user)
             shell: /bin/bash
-            groups: [sudo]
             sudo: ALL=(ALL) NOPASSWD:ALL
-            lock_passwd: true
+        \(passwordLines)
         \(keys.isEmpty ? "" : "    ssh_authorized_keys:\n" + keys)
         ssh_pwauth: false
-        write_files:
-          - path: /etc/systemd/system/serial-getty@hvc0.service.d/lucent-autologin.conf
-            content: |
-              [Service]
-              ExecStart=
-              ExecStart=-/sbin/agetty --autologin \(c.user) --keep-baud 115200,57600,38400,9600 %I $TERM
-          - path: /etc/profile.d/lucent-console.sh
-            content: |
-        \(consoleScript.split(separator: "\n").map { "      " + $0 }.joined(separator: "\n"))
-        runcmd:
-          - [systemctl, daemon-reload]
-          - [systemctl, restart, serial-getty@hvc0.service]
+        \(consoleSetup)
         """
         let metaData = "instance-id: \(c.id)-\(Int(c.created.timeIntervalSince1970))\nlocal-hostname: \(c.id)\n"
         try userData.write(to: work.appendingPathComponent("user-data"), atomically: true, encoding: .utf8)
@@ -195,7 +320,8 @@ enum VMLibrary {
         saved=$(stty -g)
         stty raw -echo min 0 time 5
         printf '\033[18t' > /dev/tty
-        IFS=';' read -r -d t _ rows cols < /dev/tty
+        # -t 1: never hang the prompt when nothing answers (no console tile open).
+        IFS=';' read -r -t 1 -d t _ rows cols < /dev/tty
         stty "$saved"
         [ -n "$cols" ] && stty rows "$rows" cols "$cols"
       }

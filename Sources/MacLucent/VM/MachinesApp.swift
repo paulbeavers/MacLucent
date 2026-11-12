@@ -1,6 +1,6 @@
 import AppKit
 
-/// Machines: Linux server VMs (Apple Virtualization.framework, Debian cloud images) — create,
+/// Machines: Linux server VMs (Apple Virtualization.framework, Linux cloud images) — create,
 /// start/stop, open a console tile or an SSH terminal, delete.
 final class MachinesApp: NSObject, TileApp, NSTextFieldDelegate {
     let view: NSView
@@ -52,7 +52,7 @@ final class MachinesApp: NSObject, TileApp, NSTextFieldDelegate {
         form.onCreate = { [weak self] spec in self?.create(spec) }
         form.onCancel = { [weak self] in self?.toggleForm() }
         empty.font = c.uiFont(13, weight: .regular)
-        empty.stringValue = "No virtual machines yet. Click New VM to make a Debian 13 server: it boots in a few seconds, "
+        empty.stringValue = "No virtual machines yet. Click New VM to make a Linux server (Debian, Ubuntu, Fedora, Rocky, Alma or Alpine): it boots in seconds, "
             + "logs you in as \(NSUserName().lowercased()) with your SSH keys, and gets its own IP address on this Mac."
         [heading, summary, newButton, form, empty].forEach(doc.addSubview)
         applyColors()
@@ -95,7 +95,7 @@ final class MachinesApp: NSObject, TileApp, NSTextFieldDelegate {
         if let message { summary.stringValue = message; return }
         let running = vms.filter { $0.state.isActive }.count
         summary.stringValue = "\(vms.count) machine\(vms.count == 1 ? "" : "s") · \(running) running · "
-            + "Debian 13 cloud images · Apple Virtualization"
+            + "Apple Virtualization"
     }
 
     @objc private func vmsChanged() {
@@ -121,7 +121,7 @@ final class MachinesApp: NSObject, TileApp, NSTextFieldDelegate {
         Task { @MainActor in
             do {
                 let config = try await VMLibrary.create(name: spec.name, cpus: spec.cpus, memoryMB: spec.memoryMB,
-                                                        diskGB: spec.diskGB, imageID: "debian-13") { text, fraction in
+                                                        diskGB: spec.diskGB, imageID: spec.imageID) { text, fraction in
                     DispatchQueue.main.async {
                         MainActor.assumeIsolated {
                             let pct = fraction.map { String(format: " %.0f%%", $0 * 100) } ?? ""
@@ -273,8 +273,8 @@ final class MachinesApp: NSObject, TileApp, NSTextFieldDelegate {
 
 /// The inline "New VM" form.
 final class NewVMForm: NSView {
-    struct Spec { let name: String; let cpus: Int; let memoryMB: Int; let diskGB: Int }
-    static let height: CGFloat = 132
+    struct Spec { let name: String; let imageID: String; let cpus: Int; let memoryMB: Int; let diskGB: Int }
+    static let height: CGFloat = 172
 
     var onCreate: ((Spec) -> Void)?
     var onCancel: (() -> Void)?
@@ -282,8 +282,12 @@ final class NewVMForm: NSView {
     private let cpus = NSPopUpButton()
     private let memory = NSPopUpButton()
     private let disk = NSPopUpButton()
-    private let labels = ["Name", "CPUs", "Memory", "Disk"].map { NSTextField(labelWithString: $0) }
-    private let note = NSTextField(labelWithString: "Debian 13 (trixie) · first VM downloads the 300 MB cloud image once")
+    private let image = NSPopUpButton()
+    private let labels = ["Name", "Image", "CPUs", "Memory", "Disk"].map { NSTextField(labelWithString: $0) }
+    private let note = NSTextField(labelWithString: "")
+    /// The name the form filled in, replaced when the image changes (unless the user typed one).
+    private var autoName = ""
+    private static var lastImageID = "debian-13"
     private let status = NSTextField(labelWithString: "")
     private let progress = NSProgressIndicator()
     private let createButton = NSButton(title: "Create", target: nil, action: nil)
@@ -309,6 +313,10 @@ final class NewVMForm: NSView {
         memory.selectItem(withTitle: "2 GB")
         disk.addItems(withTitles: diskChoices.map { "\($0) GB" })
         disk.selectItem(withTitle: "20 GB")
+        image.addItems(withTitles: CloudImage.all.map(\.name))
+        image.selectItem(at: CloudImage.all.firstIndex { $0.id == Self.lastImageID } ?? 0)
+        image.target = self
+        image.action = #selector(imageChanged)
         nameField.placeholderString = "e.g. dev-server"
         nameField.font = c.uiFont(13, weight: .regular)
         nameField.target = self
@@ -327,7 +335,7 @@ final class NewVMForm: NSView {
         cancelButton.bezelStyle = .rounded
         cancelButton.target = self
         cancelButton.action = #selector(cancelTapped)
-        ([nameField, cpus, memory, disk, note, status, progress, createButton, cancelButton] + labels).forEach(addSubview)
+        ([nameField, image, cpus, memory, disk, note, status, progress, createButton, cancelButton] + labels).forEach(addSubview)
         applyColors()
     }
 
@@ -335,14 +343,39 @@ final class NewVMForm: NSView {
 
     func reset(existing: Set<String>) {
         self.existing = existing
-        var n = 1
-        while existing.contains(n == 1 ? "debian" : "debian-\(n)") { n += 1 }
-        nameField.stringValue = n == 1 ? "debian" : "debian-\(n)"
+        autoName = suggestedName()
+        nameField.stringValue = autoName
         setBusy(false, status: "")
+        updateNote()
+    }
+
+    private var selectedImage: CloudImage { CloudImage.all[max(0, image.indexOfSelectedItem)] }
+
+    /// "ubuntu", "ubuntu-2", … from the image's first word, avoiding existing VMs.
+    private func suggestedName() -> String {
+        let base = selectedImage.id.split(separator: "-").first.map(String.init) ?? "vm"
+        var n = 1
+        while existing.contains(n == 1 ? base : "\(base)-\(n)") { n += 1 }
+        return n == 1 ? base : "\(base)-\(n)"
+    }
+
+    @objc private func imageChanged() {
+        Self.lastImageID = selectedImage.id
+        if nameField.stringValue == autoName || nameField.stringValue.isEmpty {
+            autoName = suggestedName()
+            nameField.stringValue = autoName
+        }
+        updateNote()
+    }
+
+    private func updateNote() {
+        let img = selectedImage
+        note.stringValue = img.isCached ? "\(img.name) · image already downloaded"
+                                        : "\(img.name) · downloads about \(img.downloadMB) MB the first time"
     }
 
     func setBusy(_ busy: Bool, status text: String, fraction: Double? = nil, isError: Bool = false) {
-        [nameField, cpus, memory, disk, createButton, cancelButton].forEach { $0.isEnabled = !busy }
+        [nameField, image, cpus, memory, disk, createButton, cancelButton].forEach { $0.isEnabled = !busy }
         status.stringValue = text
         statusIsError = isError
         progress.isHidden = !busy
@@ -370,14 +403,23 @@ final class NewVMForm: NSView {
     override func layout() {
         super.layout()
         let pad: CGFloat = 16
-        var x = pad
-        let widths: [CGFloat] = [max(160, bounds.width - pad * 2 - 3 * 110 - 3 * 12), 110, 110, 110]
-        let controls: [NSView] = [nameField, cpus, memory, disk]
-        for (i, control) in controls.enumerated() {
-            labels[i].sizeToFit()
-            labels[i].frame.origin = CGPoint(x: x, y: 14)
-            control.frame = CGRect(x: x, y: 34, width: widths[i], height: i == 0 ? 24 : 26)
-            x += widths[i] + 12
+        // Row 1: name + image; row 2: CPUs, memory, disk.
+        let imageW: CGFloat = 220
+        let rows: [[(NSView, CGFloat)]] = [
+            [(nameField, max(140, bounds.width - pad * 2 - imageW - 12)), (image, imageW)],
+            [(cpus, 110), (memory, 110), (disk, 110)],
+        ]
+        var label = 0
+        for (r, row) in rows.enumerated() {
+            var x = pad
+            let top: CGFloat = 14 + CGFloat(r) * 58
+            for (control, width) in row {
+                labels[label].sizeToFit()
+                labels[label].frame.origin = CGPoint(x: x, y: top)
+                control.frame = CGRect(x: x, y: top + 20, width: width, height: control === nameField ? 24 : 26)
+                x += width + 12
+                label += 1
+            }
         }
         createButton.sizeToFit()
         cancelButton.sizeToFit()
@@ -403,7 +445,7 @@ final class NewVMForm: NSView {
         }
         let mem = memoryChoices[safe: memory.indexOfSelectedItem] ?? 2048
         let gb = diskChoices[safe: disk.indexOfSelectedItem] ?? 20
-        onCreate?(Spec(name: name, cpus: Int(cpus.titleOfSelectedItem ?? "2") ?? 2, memoryMB: mem, diskGB: gb))
+        onCreate?(Spec(name: name, imageID: selectedImage.id, cpus: Int(cpus.titleOfSelectedItem ?? "2") ?? 2, memoryMB: mem, diskGB: gb))
     }
 
     @objc private func cancelTapped() { onCancel?() }
