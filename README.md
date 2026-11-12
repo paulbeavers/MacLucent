@@ -189,7 +189,11 @@ Apps can read `Config.shared` and observe `.configDidChange` to react to setting
   each family's license is alongside it: SIL OFL 1.1, or MIT for Hack / Nerd Fonts patches).
   Pick one in Settings → Terminal → Font; "Automatic" uses JetBrainsMono Nerd Font Mono. Any
   monospaced font installed on the Mac is listed too.
-- Shell: uses Homebrew bash (`/opt/homebrew/bin/bash`) if installed, otherwise `/bin/bash`.
+- Shell: bash — Homebrew's (`/opt/homebrew/bin/bash`) if installed, otherwise `/bin/bash` — even
+  when your login shell is zsh. Each terminal starts through a small Lucent startup file that runs
+  `/etc/profile`, then your `~/.bash_profile` (or `.bash_login` / `.profile`), or — if you have
+  none — your `~/.bashrc` (a login shell never reads `.bashrc` on its own), and finally adds Lucent's
+  folder-tracking hook to your `PROMPT_COMMAND`.
 
 ### Performance notes
 

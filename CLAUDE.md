@@ -77,6 +77,12 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
 - **`TerminalOutputFilter`** strips `CSI ? u` / `CSI > n u` / `CSI < u` / `CSI = n u` from PTY
   output: SwiftTerm 1.10.1 treats every `CSI … u` as restore-cursor, which made Claude Code's
   prompts redraw at the top of the window. Handles sequences split across reads.
+- **bash starts via Lucent's rc file**, not `--login`: `bash --rcfile <tmp>/lucent-bash-startup.sh -i`
+  (written by `TerminalApp.startupFile`). It sources /etc/profile, then ~/.bash_profile /
+  .bash_login / .profile, else ~/.bashrc (the user has only a ~/.bashrc — the Lucent Mac bash setup —
+  and zsh as login shell; a plain login bash skipped it and looked bare), then prepends
+  `__lucent_osc7` to PROMPT_COMMAND (passing PROMPT_COMMAND via env was overwritten by the user's
+  rc). Don't edit the user's dotfiles to fix shell setup.
 - **Terminal scroller hidden**; terminal tint only fills the padding ring (no double alpha).
 - **Overlays on top of app content must not take mouse events.** AppKit hit-tests views even at
   `alphaValue` 0: `TileWindow`'s inactive-dim view covered every tile and swallowed mouse-wheel
