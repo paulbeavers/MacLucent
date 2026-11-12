@@ -16,7 +16,8 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
     private var appliedTheme = Config.shared.themeID
     private let padding: CGFloat = 8
 
-    init(directory: String? = nil) {
+    /// `command` is typed into the new shell (e.g. `ssh …` from Machines).
+    init(directory: String? = nil, command: String? = nil) {
         let c = Config.shared
         let effect = PaddedContainer(blur: c.blur)
         effect.tintColor = c.terminalPalette.base.withAlphaComponent(c.terminalOpacity)
@@ -42,6 +43,7 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
         terminal.startProcess(executable: shell, args: ["--rcfile", Self.startupFile, "-i"],
                               environment: Self.environment(shell: shell),
                               execName: nil, currentDirectory: dir)
+        if let command { terminal.send(txt: command + "\n") } // buffered until bash reads it
     }
 
     /// Lucent's bash startup file. bash runs as an interactive shell with this as its rc file,

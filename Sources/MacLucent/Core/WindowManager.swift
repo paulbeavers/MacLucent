@@ -697,8 +697,8 @@ final class WindowManager {
     }
 
     /// Open a terminal tile in `directory` (home if nil).
-    func openTerminal(in directory: String?) {
-        open(TerminalApp(directory: directory)).appID = "terminal"
+    func openTerminal(in directory: String?, command: String? = nil) {
+        open(TerminalApp(directory: directory, command: command)).appID = "terminal"
     }
 
     func showThemePicker() {

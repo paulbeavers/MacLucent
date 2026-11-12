@@ -136,13 +136,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let terminals = manager.allWindows.filter { $0.app is TerminalApp }.count
-        guard terminals > 0, !CommandLine.arguments.contains("--no-confirm-quit") else { return .terminateNow }
-        let alert = NSAlert()
-        alert.messageText = "Quit Lucent?"
-        alert.informativeText = "\(terminals) terminal\(terminals == 1 ? "" : "s") will be closed."
-        alert.addButton(withTitle: "Quit")
-        alert.addButton(withTitle: "Cancel")
-        return alert.runModal() == .alertFirstButtonReturn ? .terminateNow : .terminateCancel
+        let vms = VMManager.shared.running.count
+        if terminals + vms > 0, !CommandLine.arguments.contains("--no-confirm-quit") {
+            var parts: [String] = []
+            if terminals > 0 { parts.append("\(terminals) terminal\(terminals == 1 ? "" : "s") will be closed.") }
+            if vms > 0 { parts.append("\(vms) running VM\(vms == 1 ? "" : "s") will be shut down.") }
+            let alert = NSAlert()
+            alert.messageText = "Quit Lucent?"
+            alert.informativeText = parts.joined(separator: " ")
+            alert.addButton(withTitle: "Quit")
+            alert.addButton(withTitle: "Cancel")
+            guard alert.runModal() == .alertFirstButtonReturn else { return .terminateCancel }
+        }
+        guard vms > 0 else { return .terminateNow }
+        // VMs run inside this process: shut them down cleanly before it exits.
+        VMManager.shared.stopAll {
+            NSApp.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 
     func applicationWillTerminate(_ notification: Notification) {

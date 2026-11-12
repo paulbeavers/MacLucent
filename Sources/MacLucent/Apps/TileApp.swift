@@ -110,6 +110,8 @@ enum AppRegistry {
                       restore: { _, s in ScratchpadApp(noteID: s["note"]?.string) }),
         AppDescriptor(id: "ports", name: "Ports", symbolName: "network", shortcut: .key("P"), singleInstance: true,
                       make: { wm in PortsApp(manager: wm) }),
+        AppDescriptor(id: "machines", name: "Machines", symbolName: "server.rack", shortcut: .key("M"), singleInstance: true,
+                      make: { wm in MachinesApp(manager: wm) }),
         AppDescriptor(id: "themes", name: "Themes…", symbolName: "paintpalette",
                       action: { wm in wm.showThemePicker() }),
     ]

@@ -20,10 +20,12 @@ final class LucentTerminalView: LocalProcessTerminalView {
         if !filtered.isEmpty { super.dataReceived(slice: filtered) }
         onData?()
     }
+}
 
+extension TerminalView {
     /// Answer XTWINOPS size queries ourselves (SwiftTerm 1.10.1 crashes on window operations —
     /// see TerminalOutputFilter). Everything else (move/resize/iconify, title stack) is ignored.
-    private func answerWindowOp(_ p: [Int]) {
+    func answerWindowOp(_ p: [Int]) {
         let t = getTerminal()
         let scale = window?.backingScaleFactor ?? 2
         let cellW = font.advancement(forGlyph: font.glyph(withName: "W")).width

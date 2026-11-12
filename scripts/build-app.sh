@@ -33,5 +33,5 @@ done
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 rm -rf "$ICONSET" build/icon-1024.png
 
-codesign --force --deep --sign - "$APP" >/dev/null
+codesign --force --deep --sign - --entitlements Resources/Lucent.entitlements "$APP" >/dev/null
 echo "Built $APP"
