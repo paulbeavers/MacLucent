@@ -16,6 +16,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.mainMenu = buildMenu()
         NotificationCenter.default.addObserver(forName: .configDidChange, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
+                guard let self, let window = self.window else { return }
+                window.appearance = Config.shared.appearance // follow light / dark themes
+                window.backgroundColor = Config.shared.crust
+            }
+        }
+        NotificationCenter.default.addObserver(forName: .configDidChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
                 guard let self, Config.shared.modifierKey != self.menuModifier else { return }
                 self.menuModifier = Config.shared.modifierKey
                 NSApp.mainMenu = self.buildMenu() // shortcuts follow the modifier key
@@ -40,7 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.titlebarSeparatorStyle = .none
         window.collectionBehavior = [.fullScreenPrimary]
         window.backgroundColor = Config.shared.crust
-        window.appearance = NSAppearance(named: .darkAqua)
+        window.appearance = Config.shared.appearance
         window.acceptsMouseMovedEvents = true
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 640, height: 400)

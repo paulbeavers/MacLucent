@@ -24,7 +24,7 @@ final class SettingsApp: NSObject, TileApp {
         super.init()
         root.wantsLayer = true
         root.layer?.backgroundColor = Config.shared.mantle.cgColor
-        root.appearance = NSAppearance(named: .darkAqua)
+        root.appearance = Config.shared.appearance
 
         scroll.drawsBackground = false
         scroll.hasVerticalScroller = true
@@ -39,6 +39,9 @@ final class SettingsApp: NSObject, TileApp {
     // MARK: Building the form
 
     private func build() {
+        header("Theme", "The same themes as Lucent for Hyprland")
+        add(ThemeGridView())
+
         header("General", "Gaps, borders and focus")
         slider("Inner gaps", 0...30, step: 1, fmt: "%.0f px", get: { Double(self.c.gapsIn) }, set: { self.c.gapsIn = CGFloat($0) })
         slider("Outer gaps", 0...60, step: 1, fmt: "%.0f px", get: { Double(self.c.gapsOut) }, set: { self.c.gapsOut = CGFloat($0) })
@@ -342,7 +345,8 @@ final class SettingsApp: NSObject, TileApp {
         let x = (view.bounds.width - width) / 2
         var y: CGFloat = 8
         for v in items {
-            v.frame = CGRect(x: x, y: y, width: width, height: v.frame.height)
+            let h = (v as? ThemeGridView)?.height(for: width) ?? v.frame.height
+            v.frame = CGRect(x: x, y: y, width: width, height: h)
             v.needsLayout = true
             y += v.frame.height
         }
@@ -350,9 +354,32 @@ final class SettingsApp: NSObject, TileApp {
     }
 
     /// Keep controls in sync when config changes elsewhere (reset, another window, a file load).
+    private var builtTheme = Config.shared.themeID
+
     @objc private func configChanged() {
+        if c.themeID != builtTheme {
+            builtTheme = c.themeID
+            // Rebuild after the current event: the change may come from one of our own controls.
+            DispatchQueue.main.async { [weak self] in self?.rebuildForTheme() }
+            return
+        }
         guard !applying else { return }
         refreshers.forEach { $0() }
+    }
+
+    /// Recreate every row in the new theme's colours, keeping the scroll position.
+    private func rebuildForTheme() {
+        let offset = scroll.contentView.bounds.origin
+        items.forEach { $0.removeFromSuperview() }
+        items.removeAll()
+        refreshers.removeAll()
+        targets.removeAll()
+        view.appearance = c.appearance
+        view.layer?.backgroundColor = c.mantle.cgColor
+        build()
+        layout()
+        scroll.contentView.scroll(to: offset)
+        scroll.reflectScrolledClipView(scroll.contentView)
     }
 
     // MARK: TileApp

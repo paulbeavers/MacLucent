@@ -1,0 +1,48 @@
+# Lucent Light
+# A crisp light theme: near-black text, white fields, a strong blue accent.
+# The greys are Fluent's light-mode text and surface steps, and the accents its
+# status and palette colours, dark enough to read as text on white.
+#
+# Not washed out where the other light schemes are: text is 1b1b1b rather than
+# a blue-grey, and crust — the colour on the accent and inside entries — is
+# pure white rather than a grey, so selected rows, the active workspace and
+# accent buttons read white on blue.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh. mauve is the
+# accent role (borders, highlights); rosewater is the terminal's cursor,
+# selection and links, the same blue.
+name = Lucent Light
+mode = light
+
+font = Noto Sans
+
+# Windows without focus get a dark grey outline, not surface0's pale one,
+# so they stay distinct on a light wallpaper.
+border = 6e6e6e
+
+# The terminal stays dark: foot takes Catppuccin Mocha Blue High Contrast's
+# palette rather than this one.
+terminal = catppuccin-mocha-blue-contrast
+# A touch more solid than the dark themes' 0.95.
+terminal_alpha = 0.98
+
+crust     = ffffff
+mantle    = f3f3f3
+base      = f9f9f9
+surface0  = dfdfdf
+surface1  = cdcdcd
+overlay   = 6e6e6e
+subtext   = 4f4f4f
+text      = 1b1b1b
+rosewater = 0067c0
+red       = c42b1c
+peach     = ca5010
+yellow    = 9d5d00
+green     = 0f7b0f
+teal      = 038387
+sapphire  = 0083a3
+blue      = 0078d4
+lavender  = 4f6bed
+mauve     = 0067c0
+pink      = bf0077

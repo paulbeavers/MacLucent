@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 CONFIG="${1:-release}"
 
+./scripts/sync-themes.sh   # same themes as the Lucent Hyprland config, when ../lucent exists
 swift build -c "$CONFIG"
 BIN="$(swift build -c "$CONFIG" --show-bin-path)/lucent"
 
@@ -13,6 +14,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Lucent"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp -R Resources/Fonts "$APP/Contents/Resources/Fonts"   # bundled coding fonts + their licenses
+cp -R Resources/Themes "$APP/Contents/Resources/Themes" # Lucent themes (*.theme)
 
 # Record build provenance for the Stats app.
 COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"

@@ -1,0 +1,41 @@
+# Neon
+# Near-black backgrounds with neon green, blue and orange on top. The point is
+# that everything drawn *over* the background glows: fonts, borders, the
+# workspace row, the clock.
+#
+# The three colours have jobs rather than being scattered. Green is the text
+# and the highlight — the focused border's bright half, the selected workspace,
+# the active tab. Blue is the focused border's other half and the cool half of
+# the status row. Orange is the clock, the cursor, the selection and the URL
+# underline, so it only ever appears on something you are meant to look at.
+#
+# The surfaces are lifted well above where a Catppuccin theme puts them.
+# surface0 is the inactive window border and a border that does not glow looks
+# broken next to one that does; surface1 is the dim workspace digits. Both are
+# also doing a second job — surface0 fills the panel, surface1 is
+# the terminal's ANSI black — which is what stopped them going brighter still.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Neon
+mode = dark
+
+crust     = 000306
+mantle    = 03070c
+base      = 070c12
+surface0  = 216078   # inactive window border, and the panel fill
+surface1  = 246e85   # inactive workspace digits; also the terminal's ANSI black
+overlay   = 3d93a8
+subtext   = 39c96b
+text      = 5dff6b
+rosewater = ff9a1f   # cursor, selection and url — orange, so it reads as "here"
+red       = ff1f4f
+peach     = ff8c00
+yellow    = ffe814
+green     = 39ff14
+teal      = 00ffd5
+sapphire  = 00d4ff
+blue      = 00a2ff   # focused border, cool half
+lavender  = ff9a1f   # the clock
+mauve     = 39ff14   # focused border bright half, and the highlight colour
+pink      = ff44cc

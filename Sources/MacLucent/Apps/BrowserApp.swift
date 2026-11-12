@@ -124,6 +124,27 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         tabBar.onNewTab = { [weak self] in self?.newTab(focusAddressBar: true) }
 
         newTab(url: url ?? c.homepage)
+        NotificationCenter.default.addObserver(self, selector: #selector(configChanged), name: .configDidChange, object: nil)
+    }
+
+    private var appliedTheme = Config.shared.themeID
+
+    /// Recolour the browser chrome when the theme changes.
+    @objc private func configChanged() {
+        let c = Config.shared
+        guard c.themeID != appliedTheme else { return }
+        appliedTheme = c.themeID
+        view.appearance = c.appearance
+        view.layer?.backgroundColor = c.mantle.cgColor
+        toolbar.layer?.backgroundColor = c.mantle.cgColor
+        urlBox.layer?.backgroundColor = c.surface0.withAlphaComponent(0.8).cgColor
+        lockIcon.contentTintColor = c.overlay0
+        urlField.textColor = c.text
+        progress.backgroundColor = c.accent.cgColor
+        reloadButton.contentTintColor = c.subtext
+        syncButtons()
+        tabBar.refreshColors()
+        for t in tabs { t.webView.underPageBackgroundColor = c.base }
     }
 
     // MARK: Tabs
@@ -462,11 +483,13 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         let tab = tab(for: webView)
         let failedURL = (e.userInfo[NSURLErrorFailingURLErrorKey] as? URL) ?? tab?.requestedURL
         let failing = failedURL?.absoluteString ?? (e.userInfo[NSURLErrorFailingURLStringErrorKey] as? String) ?? ""
+        let p = Config.shared.palette
+        func css(_ c: NSColor) -> String { "#" + c.hexString.dropFirst().prefix(6) }
         tab?.failedURL = failedURL
         let html = """
-        <html><body style="background:#1e1e2e;color:#cdd6f4;font:15px -apple-system;display:flex;align-items:center;justify-content:center;height:90vh">
-        <div style="max-width:520px"><h2 style="font-weight:500;color:#f38ba8">Can't open this page</h2>
-        <p style="color:#a6adc8">\(failing.htmlEscaped)</p><p style="color:#6c7086">\(e.localizedDescription.htmlEscaped)</p></div></body></html>
+        <html><body style="background:\(css(p.base));color:\(css(p.text));font:15px -apple-system;display:flex;align-items:center;justify-content:center;height:90vh">
+        <div style="max-width:520px"><h2 style="font-weight:500;color:\(css(p.red))">Can't open this page</h2>
+        <p style="color:\(css(p.subtext))">\(failing.htmlEscaped)</p><p style="color:\(css(p.overlay))">\(e.localizedDescription.htmlEscaped)</p></div></body></html>
         """
         webView.loadHTMLString(html, baseURL: nil)
         refreshTabBar()
@@ -548,6 +571,11 @@ final class TabBarView: NSView {
     private let inset: CGFloat = 6
 
     override var isFlipped: Bool { true }
+
+    func refreshColors() {
+        layer?.backgroundColor = Config.shared.crust.cgColor
+        needsDisplay = true
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)

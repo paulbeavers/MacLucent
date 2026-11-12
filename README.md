@@ -96,6 +96,21 @@ them in Settings → Workspaces; the choice is saved. On a floating workspace wi
 The tiled arrangement is kept while a workspace floats, so switching back restores it, and each
 window remembers its floating position for next time.
 
+### Themes
+
+Lucent for the Mac uses **the same themes as the Lucent Hyprland config** — the `*.theme` files
+from `../lucent/config/hypr/themes`, copied into `Resources/Themes` by `scripts/sync-themes.sh`
+(run automatically by the build when the sibling repo is present). Pick one in **Settings → Theme**
+(a card per theme) or from the launcher: **⌘ D → Themes…** — type to filter, ↑/↓ previews live,
+Enter keeps it, Esc puts the old one back.
+
+A theme recolours everything at once, mapped like on Hyprland: the focused border is the
+`mauve → blue` gradient, unfocused borders `border` or `surface0`, highlights `mauve`, and the
+terminal's 16 colours, cursor and selection follow foot's mapping. `terminal = <theme>` gives a
+theme another theme's terminal (Lucent Light's dark terminal), light themes switch the app to light
+appearance and an opaque terminal, and the built-in wallpaper is drawn from the theme. Extra
+themes in `~/.config/lucent/themes/*.theme` are picked up too (same format).
+
 ### Session restore
 
 When you quit (and every 15 seconds while running), Lucent saves your session to

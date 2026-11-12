@@ -65,6 +65,7 @@ struct SettingsFile: Codable {
     var floatingWorkspaces: [Int]?
     var modifierKey: String?
     var restoreSession: Bool?
+    var theme: String?
 }
 
 /// Runtime configuration, modelled on hyprland.conf's `general`, `decoration` and
@@ -156,19 +157,56 @@ final class Config {
         return FileManager.default.fileExists(atPath: p) ? p : nil
     }()
 
-    // palette (Catppuccin Mocha – a common Hyprland rice)
-    let base = NSColor(hex: 0x1E1E2E)
-    let mantle = NSColor(hex: 0x181825)
-    let crust = NSColor(hex: 0x11111B)
-    let surface0 = NSColor(hex: 0x313244)
-    let surface1 = NSColor(hex: 0x45475A)
-    let overlay0 = NSColor(hex: 0x6C7086)
-    let text = NSColor(hex: 0xCDD6F4)
-    let subtext = NSColor(hex: 0xA6ADC8)
-    let accent = NSColor(hex: 0x89B4FA)
-    let accent2 = NSColor(hex: 0xA6E3A1)
-    let pink = NSColor(hex: 0xF5C2E7)
-    let red = NSColor(hex: 0xF38BA8)
+    // MARK: Theme (Lucent themes — see Themes.swift)
+
+    /// The active theme's file name (e.g. "catppuccin-mocha-blue-contrast").
+    var themeID = "catppuccin-mocha" // what Palette.mocha is; load() applies the real theme
+    /// The active palette (19 Lucent colour roles).
+    var palette = Palette.mocha
+    /// The terminal's palette: the theme's own, or another theme's via its `terminal` key.
+    var terminalPalette = Palette.mocha
+
+    var isLight: Bool { palette.isLight }
+    /// AppKit appearance matching the theme (controls, scrollers, pop-ups).
+    var appearance: NSAppearance { NSAppearance(named: isLight ? .aqua : .darkAqua)! }
+
+    // Role shorthands used throughout the UI.
+    var base: NSColor { palette.base }
+    var mantle: NSColor { palette.mantle }
+    var crust: NSColor { palette.crust }
+    var surface0: NSColor { palette.surface0 }
+    var surface1: NSColor { palette.surface1 }
+    var overlay0: NSColor { palette.overlay }
+    var text: NSColor { palette.text }
+    var subtext: NSColor { palette.subtext }
+    /// The highlight colour: Lucent's `mauve` role (borders, selection, active workspace).
+    var accent: NSColor { palette.mauve }
+    var accent2: NSColor { palette.green }
+    var pink: NSColor { palette.pink }
+    var red: NSColor { palette.red }
+    var yellow: NSColor { palette.yellow }
+
+    /// Switch to a theme's colours. With `fully`, also take the theme's window borders, terminal
+    /// opacity (light themes and an explicit `terminal_alpha`) and terminal font — what picking
+    /// a theme does. Loading saved settings uses `fully: false`, keeping the user's own tweaks.
+    func applyTheme(_ t: LucentTheme, fully: Bool) {
+        themeID = t.id
+        palette = t.palette
+        terminalPalette = t.terminal.flatMap(ThemeLibrary.theme)?.palette ?? t.palette
+        guard fully else { return }
+        // Hyprland's look: focused = mauve→blue at 45°, unfocused = `border` or surface0.
+        activeBorder = [t.palette.mauve, t.palette.blue]
+        inactiveBorder = t.border ?? t.palette.surface0
+        // A light terminal background at partial opacity turns grey and unreadable.
+        if let a = t.terminalAlpha {
+            terminalOpacity = CGFloat(a)
+        } else if terminalPalette.isLight {
+            terminalOpacity = 1
+        }
+        if let mono = t.mono, NSFontManager.shared.availableMembers(ofFontFamily: mono) != nil {
+            terminalFontFamily = mono
+        }
+    }
 
     func terminalFont(size: CGFloat? = nil) -> NSFont {
         let s = size ?? terminalFontSize
@@ -212,10 +250,12 @@ final class Config {
             workspaceAnimationDuration: workspaceAnimationDuration, homepage: homepage, searchURL: searchURL,
             terminalFontSize: terminalFontSize, terminalFontFamily: terminalFontFamily ?? "",
             wallpaperPath: wallpaperPath ?? "", floatingWorkspaces: floatingWorkspaces.sorted(),
-            modifierKey: modifierKey.rawValue, restoreSession: restoreSession)
+            modifierKey: modifierKey.rawValue, restoreSession: restoreSession, theme: themeID)
     }
 
     func apply(_ f: SettingsFile) {
+        // Theme first, so explicit colour settings below (borders) win over it.
+        if let id = f.theme, let t = ThemeLibrary.theme(id) { applyTheme(t, fully: false) }
         if let v = f.gapsIn { gapsIn = CGFloat(v) }
         if let v = f.gapsOut { gapsOut = CGFloat(v) }
         if let v = f.borderSize { borderSize = CGFloat(v) }
@@ -245,7 +285,13 @@ final class Config {
     /// Load saved settings, if any. Call once at launch, before any views are built.
     func load() {
         guard let data = try? Data(contentsOf: Self.settingsURL),
-              let f = try? JSONDecoder().decode(SettingsFile.self, from: data) else { return }
+              let f = try? JSONDecoder().decode(SettingsFile.self, from: data) else {
+            // First run: Lucent's default theme, borders and all.
+            if let t = ThemeLibrary.theme(ThemeLibrary.defaultID) { applyTheme(t, fully: true) }
+            return
+        }
+        // Settings saved before themes existed: take the default palette, keep their borders.
+        if f.theme == nil, let t = ThemeLibrary.theme(ThemeLibrary.defaultID) { applyTheme(t, fully: false) }
         apply(f)
         if ProcessInfo.processInfo.environment["ML_BLUR"] != nil { blur = true }
     }
@@ -262,6 +308,7 @@ final class Config {
     func resetToDefaults() {
         let defaults = Config()
         defaults.wallpaperPath = nil
+        if let t = ThemeLibrary.theme(ThemeLibrary.defaultID) { defaults.applyTheme(t, fully: true) }
         apply(defaults.snapshot())
         notifyChanged()
         save()

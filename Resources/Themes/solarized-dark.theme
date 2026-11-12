@@ -1,0 +1,27 @@
+# Solarized Dark
+# The precision-engineered classic.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Solarized Dark
+mode = dark
+
+crust     = 00141a
+mantle    = 001f27
+base      = 002b36
+surface0  = 073642
+surface1  = 0f4a58
+overlay   = 586e75
+subtext   = 839496
+text      = 93a1a1
+rosewater = cb4b16
+red       = dc322f
+peach     = cb4b16
+yellow    = b58900
+green     = 859900
+teal      = 2aa198
+sapphire  = 2aa198
+blue      = 268bd2
+lavender  = 6c71c4
+mauve     = 6c71c4
+pink      = d33682

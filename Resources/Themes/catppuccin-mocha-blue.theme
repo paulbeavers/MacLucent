@@ -1,0 +1,29 @@
+# Catppuccin Mocha Blue
+# Catppuccin Mocha exactly, except the role the desktop highlights with. Same
+# background, same text, same everything — the focused border, active
+# workspace, selected row and lock ring are light blue instead of purple.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Catppuccin Mocha Blue
+mode = dark
+
+crust     = 11111b
+mantle    = 181825
+base      = 1e1e2e
+surface0  = 313244
+surface1  = 45475a
+overlay   = 6c7086
+subtext   = a6adc8
+text      = cdd6f4
+rosewater = f5e0dc
+red       = f38ba8
+peach     = fab387
+yellow    = f9e2af
+green     = a6e3a1
+teal      = 94e2d5
+sapphire  = 74c7ec
+blue      = 89b4fa
+lavender  = 89b4fa   # blue: the clock, which would otherwise stay purple
+mauve     = 74c7ec   # sapphire: the highlight colour, deliberately
+pink      = f5c2e7

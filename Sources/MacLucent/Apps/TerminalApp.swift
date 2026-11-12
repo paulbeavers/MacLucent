@@ -13,12 +13,13 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
     /// Per-window zoom (⌘+/⌘−) on top of the configured font size.
     private var zoom: CGFloat = 0
     private var container: PaddedContainer { view as! PaddedContainer }
+    private var appliedTheme = Config.shared.themeID
     private let padding: CGFloat = 8
 
     init(directory: String? = nil) {
         let c = Config.shared
         let effect = PaddedContainer(blur: c.blur)
-        effect.tintColor = c.base.withAlphaComponent(c.terminalOpacity)
+        effect.tintColor = c.terminalPalette.base.withAlphaComponent(c.terminalOpacity)
         view = effect
 
         terminal = LucentTerminalView(frame: CGRect(x: 0, y: 0, width: 800, height: 600))
@@ -72,21 +73,21 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
         return env.map { "\($0.key)=\($0.value)" }
     }
 
-    /// Catppuccin Mocha.
+    /// Colours from the active theme's terminal palette, mapped like Lucent's foot config:
+    /// ANSI from the 19 roles, cursor and selection in `rosewater`, text on `base`.
     static func applyTheme(to t: TerminalView) {
         let c = Config.shared
-        let hex: [UInt32] = [
-            0x45475A, 0xF38BA8, 0xA6E3A1, 0xF9E2AF, 0x89B4FA, 0xF5C2E7, 0x94E2D5, 0xBAC2DE,
-            0x585B70, 0xF38BA8, 0xA6E3A1, 0xF9E2AF, 0x89B4FA, 0xF5C2E7, 0x94E2D5, 0xA6ADC8,
-        ]
-        t.installColors(hex.map {
-            SwiftTerm.Color(red: UInt16(($0 >> 16) & 0xFF) * 257, green: UInt16(($0 >> 8) & 0xFF) * 257, blue: UInt16($0 & 0xFF) * 257)
+        let p = c.terminalPalette
+        t.installColors(p.ansi.map { color in
+            let rgb = color.usingColorSpace(.sRGB) ?? color
+            return SwiftTerm.Color(red: UInt16(rgb.redComponent * 65535), green: UInt16(rgb.greenComponent * 65535),
+                                   blue: UInt16(rgb.blueComponent * 65535))
         })
-        t.nativeForegroundColor = c.text
+        t.nativeForegroundColor = p.text
         // Same translucent color as the container's tint, so the padding and text area match.
-        t.nativeBackgroundColor = c.base.withAlphaComponent(c.terminalOpacity)
-        t.caretColor = NSColor(hex: 0xF5E0DC)
-        t.selectedTextBackgroundColor = c.surface1
+        t.nativeBackgroundColor = p.base.withAlphaComponent(c.terminalOpacity)
+        t.caretColor = p.rosewater
+        t.selectedTextBackgroundColor = p.rosewater.withAlphaComponent(0.35)
     }
 
     func focus() {
@@ -126,8 +127,13 @@ final class TerminalApp: NSObject, TileApp, LocalProcessTerminalViewDelegate {
         let c = Config.shared
         let font = c.terminalFont(size: max(7, c.terminalFontSize + zoom))
         if font != terminal.font { terminal.font = font }
-        terminal.nativeBackgroundColor = c.base.withAlphaComponent(c.terminalOpacity)
-        container.tintColor = c.base.withAlphaComponent(c.terminalOpacity)
+        if c.themeID != appliedTheme {
+            appliedTheme = c.themeID
+            Self.applyTheme(to: terminal) // full recolour only when the theme changes
+            terminal.needsDisplay = true
+        }
+        terminal.nativeBackgroundColor = c.terminalPalette.base.withAlphaComponent(c.terminalOpacity)
+        container.tintColor = c.terminalPalette.base.withAlphaComponent(c.terminalOpacity)
         container.setBlur(c.blur)
     }
 
@@ -187,7 +193,7 @@ final class PaddedContainer: NSView {
             b.material = .hudWindow
             b.blendingMode = .withinWindow
             b.state = .active
-            b.appearance = NSAppearance(named: .darkAqua)
+            b.appearance = Config.shared.appearance
             addSubview(b, positioned: .below, relativeTo: nil)
             backdrop = b
         } else if !on, let b = backdrop {

@@ -46,7 +46,7 @@ final class StatsApp: NSObject, TileApp {
         super.init()
         root.wantsLayer = true
         root.layer?.backgroundColor = Config.shared.mantle.cgColor
-        root.appearance = NSAppearance(named: .darkAqua)
+        root.appearance = Config.shared.appearance
         scroll.drawsBackground = false
         scroll.hasVerticalScroller = true
         scroll.autohidesScrollers = true
@@ -78,6 +78,7 @@ final class StatsApp: NSObject, TileApp {
         diskTile.showsMeter = true
 
         fillStatic()
+        NotificationCenter.default.addObserver(self, selector: #selector(configChanged), name: .configDidChange, object: nil)
         tick()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
@@ -85,6 +86,15 @@ final class StatsApp: NSObject, TileApp {
     }
 
     // MARK: Updating
+
+    @objc private func configChanged() {
+        view.appearance = c.appearance
+        view.layer?.backgroundColor = c.mantle.cgColor
+        heading.textColor = c.text
+        subheading.textColor = c.subtext
+        tiles.forEach { $0.refreshColors() }
+        [workspacesTable, terminalsTable, systemTable, buildTable].forEach { $0.refreshColors() }
+    }
 
     private func tick() {
         let terminals = manager?.allWindows.compactMap { $0.app as? TerminalApp } ?? []
@@ -280,23 +290,30 @@ final class StatTile: NSView {
         super.init(frame: .zero)
         let c = Config.shared
         wantsLayer = true
-        layer?.backgroundColor = c.base.cgColor
         layer?.cornerRadius = 10
         layer?.borderWidth = 1
-        layer?.borderColor = c.surface0.cgColor
         label.stringValue = text
         label.font = c.uiFont(11.5, weight: .medium)
-        label.textColor = c.subtext
         value.font = c.uiFont(22, weight: .semibold)
-        value.textColor = c.text
         detail.font = c.uiFont(11, weight: .regular)
-        detail.textColor = c.overlay0
+        refreshColors()
         detail.lineBreakMode = .byTruncatingTail
         meter.isHidden = true
         [label, value, detail, sparkline, meter].forEach(addSubview)
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    func refreshColors() {
+        let c = Config.shared
+        layer?.backgroundColor = c.base.cgColor
+        layer?.borderColor = c.surface0.cgColor
+        label.textColor = c.subtext
+        value.textColor = c.text
+        detail.textColor = c.overlay0
+        sparkline.refreshColors()
+        meter.needsDisplay = true
+    }
 
     func set(value v: String, detail d: String, series: [Double]) {
         value.stringValue = v
@@ -342,6 +359,12 @@ final class SparklineView: NSView {
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    func refreshColors() {
+        readout.textColor = Config.shared.text
+        readout.backgroundColor = Config.shared.crust
+        needsDisplay = true
+    }
 
     /// Points span the full history width so the line grows in from the left at first.
     private func point(_ i: Int, _ v: Double, ceiling: Double) -> CGPoint {
@@ -424,7 +447,7 @@ final class MeterView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let c = Config.shared
         let r = bounds.height / 2
-        let fill: NSColor = fraction >= 0.9 ? c.red : (fraction >= 0.75 ? NSColor(hex: 0xF9E2AF) : c.accent)
+        let fill: NSColor = fraction >= 0.9 ? c.red : (fraction >= 0.75 ? c.yellow : c.accent)
         fill.withAlphaComponent(0.22).setFill()
         NSBezierPath(roundedRect: bounds, xRadius: r, yRadius: r).fill()
         let w = max(bounds.height, bounds.width * CGFloat(min(1, max(0, fraction))))
@@ -454,6 +477,11 @@ final class InfoTable: NSView {
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    func refreshColors() {
+        titleLabel.textColor = Config.shared.text
+        needsDisplay = true
+    }
 
     var preferredHeight: CGFloat {
         28 + (headerless ? 0 : rowHeight) + CGFloat(max(rows.count, 1)) * rowHeight + 4

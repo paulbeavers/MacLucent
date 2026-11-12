@@ -1,0 +1,27 @@
+# Nord
+# Arctic blue-grey, muted and even.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Nord
+mode = dark
+
+crust     = 242933
+mantle    = 2b303b
+base      = 2e3440
+surface0  = 3b4252
+surface1  = 434c5e
+overlay   = 4c566a
+subtext   = d8dee9
+text      = eceff4
+rosewater = d08770
+red       = bf616a
+peach     = d08770
+yellow    = ebcb8b
+green     = a3be8c
+teal      = 8fbcbb
+sapphire  = 88c0d0
+blue      = 81a1c1
+lavender  = 8fbcbb
+mauve     = b48ead
+pink      = b48ead

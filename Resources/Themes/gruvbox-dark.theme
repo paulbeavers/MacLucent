@@ -1,0 +1,27 @@
+# Gruvbox Dark
+# Warm retro earth tones, high contrast.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Gruvbox Dark
+mode = dark
+
+crust     = 1d2021
+mantle    = 282828
+base      = 32302f
+surface0  = 3c3836
+surface1  = 504945
+overlay   = 665c54
+subtext   = a89984
+text      = ebdbb2
+rosewater = d5c4a1
+red       = fb4934
+peach     = fe8019
+yellow    = fabd2f
+green     = b8bb26
+teal      = 8ec07c
+sapphire  = 83a598
+blue      = 83a598
+lavender  = d3869b
+mauve     = d3869b
+pink      = d3869b

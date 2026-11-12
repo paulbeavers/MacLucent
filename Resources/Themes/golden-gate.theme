@@ -1,0 +1,30 @@
+# Golden Gate
+# macOS's light appearance: white and fog-grey surfaces, near-black text, and
+# Apple's light-mode system colours, deepened where they sit on white. The
+# accent is the bridge's International Orange, which runs into bay blue on
+# the window border.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Golden Gate
+mode = light
+
+crust     = e3e3e6
+mantle    = ececee
+base      = f6f6f7
+surface0  = d9d9dc
+surface1  = b8b8bd
+overlay   = 6e6e73
+subtext   = 3c3c43
+text      = 1d1d1f
+rosewater = b5654a
+red       = d70015
+peach     = b34d00
+yellow    = 8a5f00
+green     = 1f7a35
+teal      = 00747f
+sapphire  = 0071a4
+blue      = 0a60d0
+lavender  = 5856d6
+mauve     = b3302a
+pink      = c2185b

@@ -1,0 +1,35 @@
+# Adwaita Light
+# GNOME's default look: libadwaita's light colours, its blue accent, the
+# Adwaita typefaces and icons. The greys are libadwaita's window, sidebar and
+# border shades; the accents are GNOME's palette, the darker steps of each so
+# they read on white.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh. mauve is the
+# accent role (borders, highlights), so here it is GNOME's blue.
+name = Adwaita Light
+mode = light
+
+font  = Adwaita Sans
+mono  = Adwaita Mono
+icons = Adwaita
+
+crust     = deddda
+mantle    = ebebed
+base      = fafafb
+surface0  = e0e0e2
+surface1  = c0bfbc
+overlay   = 9a9996
+subtext   = 5e5c64
+text      = 2e2e32
+rosewater = 1c71d8
+red       = e01b24
+peach     = e66100
+yellow    = c88800
+green     = 26a269
+teal      = 2190a4
+sapphire  = 1a5fb4
+blue      = 3584e4
+lavender  = 1c71d8
+mauve     = 3584e4
+pink      = d56199

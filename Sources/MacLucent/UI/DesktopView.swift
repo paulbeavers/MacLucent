@@ -61,6 +61,7 @@ final class DesktopView: NSView {
     func dismissOverlay(notify: Bool = true) {
         guard let o = overlay else { return }
         overlay = nil
+        o.willDismiss()
         o.removeFromSuperview()
         if notify { onOverlayDismissed?() }
     }
@@ -78,11 +79,17 @@ final class WallpaperView: NSView {
 
     required init?(coder: NSCoder) { fatalError() }
 
+    private var drawnTheme = Config.shared.themeID
+
     @objc private func configChanged() {
         let path = Config.shared.wallpaperPath
-        guard path != imagePath else { return }
-        imagePath = path
-        image = path.flatMap { NSImage(contentsOfFile: $0) }
+        let theme = Config.shared.themeID
+        guard path != imagePath || theme != drawnTheme else { return }
+        if path != imagePath {
+            imagePath = path
+            image = path.flatMap { NSImage(contentsOfFile: $0) }
+        }
+        drawnTheme = theme
         needsDisplay = true
     }
 
@@ -97,13 +104,15 @@ final class WallpaperView: NSView {
                                   width: size.width, height: size.height))
             return
         }
-        NSGradient(colors: [NSColor(hex: 0x0B0B14), NSColor(hex: 0x161626), NSColor(hex: 0x10121F)])?
-            .draw(in: bounds, angle: -60)
+        // Built from the theme: its darkest backgrounds, with soft glows of its accents.
+        let p = Config.shared.palette
+        NSGradient(colors: [p.crust, p.mantle, p.crust])?.draw(in: bounds, angle: -60)
+        let k: CGFloat = p.isLight ? 0.6 : 1 // glows read stronger on a light background
         let glows: [(CGFloat, CGFloat, CGFloat, NSColor)] = [
-            (0.18, 0.25, 0.55, NSColor(hex: 0x33CCFF, alpha: 0.22)),
-            (0.85, 0.80, 0.60, NSColor(hex: 0x00FF99, alpha: 0.14)),
-            (0.70, 0.15, 0.40, NSColor(hex: 0xCBA6F7, alpha: 0.16)),
-            (0.30, 0.90, 0.45, NSColor(hex: 0xF5C2E7, alpha: 0.10)),
+            (0.18, 0.25, 0.55, p.blue.withAlphaComponent(0.22 * k)),
+            (0.85, 0.80, 0.60, p.green.withAlphaComponent(0.14 * k)),
+            (0.70, 0.15, 0.40, p.mauve.withAlphaComponent(0.16 * k)),
+            (0.30, 0.90, 0.45, p.pink.withAlphaComponent(0.10 * k)),
         ]
         let m = max(bounds.width, bounds.height)
         for (x, y, r, color) in glows {
@@ -131,7 +140,7 @@ class OverlayView: NSView {
         panel.material = .hudWindow
         panel.blendingMode = .withinWindow
         panel.state = .active
-        panel.appearance = NSAppearance(named: .darkAqua)
+        panel.appearance = c.appearance
         panel.wantsLayer = true
         panel.layer?.cornerRadius = c.rounding + 4
         panel.layer?.cornerCurve = .continuous
@@ -153,4 +162,6 @@ class OverlayView: NSView {
 
     func layoutPanel() {}
     func didAppear() {}
+    /// Called just before the overlay is removed, however it is dismissed.
+    func willDismiss() {}
 }

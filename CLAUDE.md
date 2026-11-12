@@ -35,6 +35,7 @@ open build/Lucent.app             # native full screen (own Space); --windowed /
 | `Core/Config.swift` | All settings (hyprland.conf-like), persistence to `~/.config/lucent/settings.json`, legacy-folder migration |
 | `Core/Session.swift` | Session save/restore (`session.json`), app-agnostic |
 | `Core/BundledFonts.swift` | Registers fonts in `Resources/Fonts` for the process |
+| `Core/Themes.swift`, `UI/ThemePicker.swift` | Lucent `*.theme` parser, `Palette` (19 roles), theme library; Settings grid + launcher picker |
 | `Apps/TileApp.swift` | **`TileApp` protocol, `AppDescriptor`, `AppRegistry`, `AppShortcut`, `JSONValue`** |
 | `Apps/TerminalApp.swift` / `TerminalCompat.swift` | SwiftTerm terminal running bash; PTY output filter |
 | `Apps/BrowserApp.swift` | Tabbed WKWebView browser (`BrowserTab`, `TabBarView`) |
@@ -53,8 +54,15 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
 ### Conventions
 - Everything is `@MainActor`; AppKit callbacks/KVO/timers wrap in `MainActor.assumeIsolated`.
 - Coordinates: workspace/tile views are flipped (y down).
-- Colors/fonts come from `Config.shared` (Catppuccin Mocha palette); settings changes post
-  `.configDidChange` — views that read config must observe it.
+- Colors come from `Config.shared.palette` (the active theme's 19 Lucent roles; `accent` = mauve,
+  the highlight role). Theme and settings changes post `.configDidChange` — every view that reads
+  colours must recolour on it (`refreshColors`/`applyColors` pattern; Settings rebuilds its form).
+  Never hard-code colours; use `c.appearance` instead of `.darkAqua` (light themes exist).
+- **Themes are shared with the sibling repo `../lucent` (the Hyprland config).** Its
+  `config/hypr/themes/*.theme` is the source of truth; `scripts/sync-themes.sh` copies them into
+  `Resources/Themes` (build does this). Mapping mirrors `theme.sh`/`theme.lua`: focused border
+  mauve→blue 45°, unfocused `border`/surface0, terminal = foot's ANSI mapping, `terminal` key =
+  another theme's terminal palette, light themes → opaque terminal and no black dimming.
 - Shortcuts use `Config.shared.mod` (⌘ or ⌥, user setting), never hard-coded `.command`;
   display strings written with "⌘" go through `Config.shortcut()` / `modSymbol`.
 - Swift 6.4 toolchain, Swift 5.9 language mode; keep the build warning-free.

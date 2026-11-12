@@ -105,6 +105,8 @@ enum AppRegistry {
                       make: { _ in SettingsApp() }),
         AppDescriptor(id: "stats", name: "Stats", symbolName: "chart.xyaxis.line", shortcut: .key("I"), singleInstance: true,
                       make: { wm in StatsApp(manager: wm) }),
+        AppDescriptor(id: "themes", name: "Themes…", symbolName: "paintpalette",
+                      action: { wm in wm.showThemePicker() }),
     ]
 
     static func app(_ id: String?) -> AppDescriptor? { id.flatMap { id in apps.first { $0.id == id } } }

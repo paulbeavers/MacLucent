@@ -1,0 +1,27 @@
+# Kanagawa
+# Ink-wash palette after Hokusai's wave.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Kanagawa
+mode = dark
+
+crust     = 16161d
+mantle    = 181820
+base      = 1f1f28
+surface0  = 2a2a37
+surface1  = 363646
+overlay   = 54546d
+subtext   = c8c093
+text      = dcd7ba
+rosewater = d27e99
+red       = e46876
+peach     = ffa066
+yellow    = e6c384
+green     = 98bb6c
+teal      = 7aa89f
+sapphire  = 7fb4ca
+blue      = 7e9cd8
+lavender  = 938aa9
+mauve     = 957fb8
+pink      = d27e99

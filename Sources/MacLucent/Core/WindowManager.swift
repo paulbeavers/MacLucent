@@ -633,6 +633,10 @@ final class WindowManager {
         return current.focused?.app.handleKey(e) ?? false
     }
 
+    func showThemePicker() {
+        desktop.showOverlay(ThemePickerOverlay())
+    }
+
     func showLauncher() {
         let launcher = LauncherOverlay(apps: AppRegistry.apps) { [weak self] d in
             self?.desktop.dismissOverlay()

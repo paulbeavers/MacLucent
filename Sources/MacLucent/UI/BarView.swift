@@ -42,7 +42,7 @@ final class BarView: NSView {
         background.material = .hudWindow
         background.blendingMode = .withinWindow
         background.state = .active
-        background.appearance = NSAppearance(named: .darkAqua)
+        background.appearance = c.appearance
         if c.blur { addSubview(background) }
         tint.wantsLayer = true
         tint.layer?.backgroundColor = c.crust.withAlphaComponent(c.blur ? 0.55 : 0.85).cgColor
@@ -85,6 +85,15 @@ final class BarView: NSView {
             background.removeFromSuperview()
         }
         tint.layer?.backgroundColor = c.crust.withAlphaComponent(c.blur ? 0.55 : 0.85).cgColor
+        // Theme colours
+        layer?.borderColor = c.surface1.withAlphaComponent(0.6).cgColor
+        background.appearance = c.appearance
+        logo.contentTintColor = c.accent
+        titleIcon.contentTintColor = c.subtext
+        titleLabel.textColor = c.text
+        modeLabel.textColor = c.overlay0
+        clockLabel.textColor = c.text
+        for p in pills.values { p.refreshColors() }
         needsLayout = true
     }
 
@@ -214,6 +223,11 @@ final class WorkspacePill: NSView {
         } else if state.occupied {
             c.surface0.setFill(); path.fill()
         }
+    }
+
+    func refreshColors() {
+        updateLabel()
+        needsDisplay = true
     }
 
     private func updateLabel() {

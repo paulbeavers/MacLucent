@@ -117,6 +117,9 @@ final class TileWindow: NSView {
             gradient.colors = [c.inactiveBorder.cgColor, c.inactiveBorder.cgColor]
         }
         CATransaction.commit()
-        dim.alphaValue = isActive ? 0 : c.inactiveDim
+        // Dark themes dim toward black; light ones fade toward their background — black over
+        // a light window just turns it a muddy grey.
+        dim.layer?.backgroundColor = (c.isLight ? c.base : NSColor.black).cgColor
+        dim.alphaValue = isActive ? 0 : c.inactiveDim * (c.isLight ? 0.7 : 1)
     }
 }

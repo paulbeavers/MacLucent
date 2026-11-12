@@ -1,0 +1,27 @@
+# Rosé Pine
+# Muted plum and rose, quiet and warm.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Rosé Pine
+mode = dark
+
+crust     = 16141f
+mantle    = 191724
+base      = 1f1d2e
+surface0  = 26233a
+surface1  = 403d52
+overlay   = 6e6a86
+subtext   = 908caa
+text      = e0def4
+rosewater = ebbcba
+red       = eb6f92
+peach     = f6c177
+yellow    = f6c177
+green     = 9ccfd8
+teal      = 9ccfd8
+sapphire  = 31748f
+blue      = 9ccfd8
+lavender  = c4a7e7
+mauve     = c4a7e7
+pink      = ebbcba

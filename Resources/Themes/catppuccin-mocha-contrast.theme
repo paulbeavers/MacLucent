@@ -1,0 +1,35 @@
+# Catppuccin Mocha High Contrast
+# Catppuccin Mocha with the range opened up at both ends: the dark ramp is
+# about a quarter darker, so the terminal sits deeper, and text, dim text and
+# the surfaces that draw borders are lifted. The accent hues are Mocha's own —
+# only the two that draw the focused border are brightened, because a gradient
+# that reads as a light source has to be lighter than what it sits on.
+#
+# The dark roles move together. crust < mantle < base is load-bearing: the bar,
+# the panels and the windows are layered with them, and darkening base alone
+# would flatten that.
+#
+# Roles, darkest background to brightest accent. Every themed config is
+# rendered from exactly these keys — see hypr/scripts/theme.sh.
+name = Catppuccin Mocha High Contrast
+mode = dark
+
+crust     = 0c0c14
+mantle    = 12121c
+base      = 161622
+surface0  = 4f5169   # inactive window border, and the panel fill
+surface1  = 636680   # inactive workspace digits; also the terminal's ANSI black
+overlay   = 8c91a8   # the dimmest readable text
+subtext   = c0c7de
+text      = e2e9fc
+rosewater = f5e0dc
+red       = f38ba8
+peach     = fab387
+yellow    = f9e2af
+green     = a6e3a1
+teal      = 94e2d5
+sapphire  = 74c7ec
+blue      = a0c5fd   # focused border, lighter half of the gradient
+lavender  = c6cdfe
+mauve     = d8bafa   # focused border, and the highlight colour
+pink      = f5c2e7
