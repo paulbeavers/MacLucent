@@ -82,6 +82,17 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   scrolling (trackpad and Page Up/Down still worked, which hid it). It is now a
   `PassthroughView` (`hitTest` → nil); use that for any purely visual overlay. To debug input
   routing, check `window.contentView?.hitTest(pointInWindow)` — it should be the app's own view.
+- **Ports app** (`Mod+P`): `PortScanner` walks every PID with libproc (`proc_listpids` →
+  `PROC_PIDLISTFDS` → `proc_pidfdinfo(PROC_PIDFDSOCKETINFO)`, TCP sockets in `TSI_S_LISTEN`); no
+  `lsof` subprocess. Only the user's own processes are visible (fine — those are the ones they
+  can stop). Full scan < 0.1 s, refreshed every 2 s only while the tile is on screen. IPv4/IPv6
+  sockets for the same pid+port merge into one row ("*" > "localhost" > address). Default filter
+  is `ListeningPort.isDev`: working directory ≠ "/" (app helpers and macOS services run from "/")
+  or a name in `devTools`; everything else is behind "Show all" — on this Mac that hides
+  ControlCenter/AirPlay, rapportd, Adobe/Creative Cloud helpers and VS Code's helper. Add tools to
+  `devTools` rather than loosening the folder rule. Actions use `WindowManager.openURL` (new tab in
+  an existing browser, else a browser tile) and `openTerminal(in:)`; Stop = SIGTERM, then an
+  NSAlert offering SIGKILL.
 - **Native full screen is the default** (user wants the separate Space / Mission Control page).
   The notch strip is intentionally unused — user said not to worry about it. The title bar is
   hidden in full screen (container + AppKit's lazily created full-screen title-bar window made
@@ -105,6 +116,11 @@ The user runs Lucent while we work. Test instances must not interfere:
   restore the file from a backup copy (pattern used throughout). Synthetic keys/mouse via
   `NSApp.sendEvent(NSEvent.keyEvent/mouseEvent …)` go through the real monitors.
 - No Accessibility permission for the shell: can't post real HID events.
+- To test Ports, start a throwaway server in the scratchpad (`python3 -m http.server PORT --bind
+  127.0.0.1` from a scratch folder), keep its PID and kill it afterwards. For quick scanner checks,
+  compile `PortScanner.swift` plus the `ProcStats` part of `SystemStats.swift` into a small CLI with
+  `swiftc` (StatsSampler references `TerminalApp`, so extract just `ProcStats`). Don't trigger Stop
+  in a test instance — its NSAlert is modal and appears on the user's screen.
 
 Debug flags / env: `--windowed`, `--borderless`, `--open terminal,browser`, `--workspace N`,
 `--launcher`, `--help-overlay`, `--type 'cmd\n'`, `--snapshot out.png`, `--no-confirm-quit`,
