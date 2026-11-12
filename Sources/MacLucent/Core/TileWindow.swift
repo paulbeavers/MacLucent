@@ -12,7 +12,9 @@ final class TileWindow: NSView {
     private let gradient = CAGradientLayer()
     private let borderMask = CAShapeLayer()
     private let content = NSView()
-    private let dim = NSView()
+    /// Dims inactive windows. Must never take mouse events: it covers the whole app area, and
+    /// AppKit hit-tests even fully transparent views — it used to swallow mouse-wheel scrolling.
+    private let dim = PassthroughView()
     private var dimLayerAlpha: CGFloat = 0
 
     var isActive = false {
@@ -122,4 +124,9 @@ final class TileWindow: NSView {
         dim.layer?.backgroundColor = (c.isLight ? c.base : NSColor.black).cgColor
         dim.alphaValue = isActive ? 0 : c.inactiveDim * (c.isLight ? 0.7 : 1)
     }
+}
+
+/// A view that is purely visual: it never receives mouse events.
+final class PassthroughView: NSView {
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
