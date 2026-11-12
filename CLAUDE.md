@@ -76,6 +76,11 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   output: SwiftTerm 1.10.1 treats every `CSI … u` as restore-cursor, which made Claude Code's
   prompts redraw at the top of the window. Handles sequences split across reads.
 - **Terminal scroller hidden**; terminal tint only fills the padding ring (no double alpha).
+- **Overlays on top of app content must not take mouse events.** AppKit hit-tests views even at
+  `alphaValue` 0: `TileWindow`'s inactive-dim view covered every tile and swallowed mouse-wheel
+  scrolling (trackpad and Page Up/Down still worked, which hid it). It is now a
+  `PassthroughView` (`hitTest` → nil); use that for any purely visual overlay. To debug input
+  routing, check `window.contentView?.hitTest(pointInWindow)` — it should be the app's own view.
 - **Native full screen is the default** (user wants the separate Space / Mission Control page).
   The notch strip is intentionally unused — user said not to worry about it. The title bar is
   hidden in full screen (container + AppKit's lazily created full-screen title-bar window made
