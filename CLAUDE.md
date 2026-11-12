@@ -123,11 +123,14 @@ Logs go to `~/Library/Logs/Lucent/`.
 
 ## Parked work and ideas
 
-- **Branch `native-apps-wip` (pushed to origin):** tiling real Mac app windows via the
-  Accessibility API (yabai/AeroSpace approach: position real windows over tiles, park off-screen
-  per workspace, CGEvent tap for global hotkeys, backdrop window level). Paused — Dock pop-up and
-  window sizing issues; user said "more than I want to deal with now". True embedding of other
-  apps' windows is impossible on macOS.
+- **Tiling native Mac apps — tried twice and dropped (user decision, 2026-11-11). Don't propose
+  it again unless asked.** True embedding of another app's window is impossible on macOS; the only
+  route is the yabai/AeroSpace one (Accessibility API positions real windows over tiles, parks them
+  off-screen per workspace, CGEvent tap for global hotkeys, Lucent's window as a desktop-level
+  backdrop). Problems hit: app windows can't enter Lucent's full-screen Space (they opened on the
+  wrong Space/workspace), the Dock appears whenever another app is frontmost (only fixable by
+  toggling the system Dock auto-hide), and apps fight the sizes they're given. The branches
+  (`native-apps-wip`, `native-apps`) were deleted; Lucent has only its own built-in tile apps.
 - **App ideas discussed** (none started): Ports/dev-servers list, Scratchpad notes, Projects
   (per-project workspace layouts), Git status/diff, Files browser, Markdown/HTML live preview,
   Dev toolbox (JSON/Base64/JWT/regex), clipboard history, HTTP client.
