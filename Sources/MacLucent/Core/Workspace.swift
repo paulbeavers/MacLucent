@@ -45,7 +45,6 @@ final class Workspace {
 final class WorkspaceView: NSView {
     weak var workspace: Workspace?
     var onLayoutChange: (() -> Void)?
-    private var dragging: Divider?
     private var edgeDrag: EdgeDrag?
     /// Called when a floating window starts being resized from its edge.
     var onFloatingEdgeDrag: ((TileWindow) -> Void)?
@@ -111,14 +110,10 @@ final class WorkspaceView: NSView {
         updateHint()
     }
 
-    // MARK: divider dragging
+    // MARK: floating edge dragging (split borders are dragged via WindowManager)
 
     private var isFloating: Bool { workspace?.mode == .floating && workspace?.fullscreen == nil }
 
-    private func divider(at p: CGPoint) -> Divider? {
-        guard workspace?.fullscreen == nil, workspace?.mode == .tiled else { return nil }
-        return workspace?.tree.dividers.last { $0.rect.contains(p) }
-    }
 
     /// Floating windows, front-most first.
     private var floatingWindowsFrontFirst: [TileWindow] {
@@ -141,7 +136,7 @@ final class WorkspaceView: NSView {
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         let local = convert(point, from: superview)
-        if divider(at: local) != nil || edgeHit(at: local) != nil { return self }
+        if edgeHit(at: local) != nil { return self } // split borders are dragged via WindowManager's monitor
         return super.hitTest(point)
     }
 
@@ -167,9 +162,7 @@ final class WorkspaceView: NSView {
         if let e = edgeHit(at: p) {
             edgeDrag = e
             onFloatingEdgeDrag?(e.window)
-            return
         }
-        dragging = divider(at: p)
     }
 
     override func mouseDragged(with event: NSEvent) {
@@ -184,18 +177,10 @@ final class WorkspaceView: NSView {
             if e.bottom { f.size.height = max(minH, f.height + dy) }
             e.window.floatFrame = f.integral
             e.window.frame = f.integral
-            return
         }
-        guard let d = dragging else { return }
-        let p = convert(event.locationInWindow, from: nil)
-        let r = d.region
-        let ratio = d.node.stacked ? (p.y - r.minY) / r.height : (p.x - r.minX) / r.width
-        d.node.ratio = min(0.9, max(0.1, ratio))
-        onLayoutChange?()
     }
 
     override func mouseUp(with event: NSEvent) {
-        dragging = nil
         edgeDrag = nil
         window?.invalidateCursorRects(for: self)
     }

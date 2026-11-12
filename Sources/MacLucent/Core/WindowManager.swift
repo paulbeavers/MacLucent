@@ -11,6 +11,8 @@ final class WindowManager {
     private var closing = Set<ObjectIdentifier>()
     /// An in-progress ⌘-drag (move) or ⌘-right-drag (resize) of a floating window.
     private var mouseDrag: MouseDrag?
+    /// An in-progress drag of a tiled split's border.
+    private var splitDrag: Divider?
 
     private struct MouseDrag {
         let window: TileWindow
@@ -497,17 +499,26 @@ final class WindowManager {
         } as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] e in
             guard let self else { return e }
+            if self.beginSplitDrag(e) { return nil }
             if self.beginFloatingDrag(e) { return nil }
             self.handleMouseDown(e)
             return e
         } as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDragged, .rightMouseDragged]) { [weak self] e in
-            guard let self, self.mouseDrag != nil else { return e }
+            guard let self else { return e }
+            if self.splitDrag != nil { self.continueSplitDrag(e); return nil }
+            guard self.mouseDrag != nil else { return e }
             self.continueFloatingDrag(e)
             return nil
         } as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: [.leftMouseUp, .rightMouseUp]) { [weak self] e in
-            guard let self, let drag = self.mouseDrag else { return e }
+            guard let self else { return e }
+            if self.splitDrag != nil {
+                self.splitDrag = nil
+                self.current.view.window?.invalidateCursorRects(for: self.current.view)
+                return nil
+            }
+            guard let drag = self.mouseDrag else { return e }
             self.mouseDrag = nil
             self.current.view.window?.invalidateCursorRects(for: self.current.view)
             if drag.moved { return nil }
@@ -516,11 +527,50 @@ final class WindowManager {
             return e
         } as Any)
         monitors.append(NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { [weak self] e in
-            guard let self, self.config.focusFollowsMouse else { return e }
+            guard let self else { return e }
+            // Resize arrows over split borders. Deferred, so it wins over a web view that sets its
+            // own cursor while handling this same event.
+            if let d = self.divider(at: e) {
+                let cursor: NSCursor = d.node.stacked ? .resizeUpDown : .resizeLeftRight
+                DispatchQueue.main.async { cursor.set() }
+            }
+            guard self.config.focusFollowsMouse else { return e }
             if let w = self.window(at: e), w !== self.current.focused, self.desktop.overlay == nil,
                self.mouseDrag == nil { self.focus(w, raise: self.config.raiseOnHover) }
             return e
         } as Any)
+    }
+
+    // MARK: Split dragging
+    //
+    // Handled here, in the event monitor, rather than by WorkspaceView: AppKit didn't reliably
+    // route the mouse-down to the workspace view next to a WKWebView (WebKit tracks the pointer
+    // around its view), so borders beside a browser couldn't be dragged.
+
+    private func divider(at e: NSEvent) -> Divider? {
+        guard e.window === desktop.window, desktop.overlay == nil, current.mode == .tiled,
+              current.fullscreen == nil else { return nil }
+        let p = current.view.convert(e.locationInWindow, from: nil)
+        return current.tree.dividers.last { $0.rect.contains(p) }
+    }
+
+    private func beginSplitDrag(_ e: NSEvent) -> Bool {
+        guard e.type == .leftMouseDown,
+              e.modifierFlags.intersection([.command, .shift, .option, .control]).isEmpty,
+              let d = divider(at: e) else { return false }
+        splitDrag = d
+        (d.node.stacked ? NSCursor.resizeUpDown : NSCursor.resizeLeftRight).set()
+        return true
+    }
+
+    private func continueSplitDrag(_ e: NSEvent) {
+        guard let d = splitDrag else { return }
+        let p = current.view.convert(e.locationInWindow, from: nil)
+        let r = d.region
+        let ratio = d.node.stacked ? (p.y - r.minY) / r.height : (p.x - r.minX) / r.width
+        d.node.ratio = min(0.9, max(0.1, ratio))
+        relayout(current, animated: false)
+        (d.node.stacked ? NSCursor.resizeUpDown : NSCursor.resizeLeftRight).set()
     }
 
     private func window(at e: NSEvent) -> TileWindow? {

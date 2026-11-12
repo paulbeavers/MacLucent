@@ -91,6 +91,14 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   Lucent restores its own session, and after a crash macOS otherwise blocks the next launch with
   a modal "reopen windows?" alert (it froze a test instance on the user's screen).
 - **Terminal scroller hidden**; terminal tint only fills the padding ring (no double alpha).
+- **Split borders are dragged in `WindowManager`'s local event monitor** (`beginSplitDrag` /
+  `continueSplitDrag`), not by `WorkspaceView`'s mouseDown: AppKit's routing to the view behind the
+  tiles stopped delivering those drags (user: "any horizontal resize does not work — it used to").
+  The monitor sees every event first, so it works whatever is under the pointer. The grab zone
+  (`LayoutTree` divider rects) covers the gap plus 5 px into each tile, so grabbing a border works;
+  the resize cursor is set (deferred) from the mouse-moved monitor. Note: synthetic drag events
+  sent with `NSApp.sendEvent` are NOT routed to a view's `mouseDragged` — test drags through the
+  monitors (which do see them), or call the handlers directly.
 - **Overlays on top of app content must not take mouse events.** AppKit hit-tests views even at
   `alphaValue` 0: `TileWindow`'s inactive-dim view covered every tile and swallowed mouse-wheel
   scrolling (trackpad and Page Up/Down still worked, which hid it). It is now a

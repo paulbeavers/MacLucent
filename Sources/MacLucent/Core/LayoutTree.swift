@@ -135,12 +135,13 @@ final class LayoutTree {
             let h = (rect.height - gap) * node.ratio
             r1 = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: h)
             r2 = CGRect(x: rect.minX, y: r1.maxY + gap, width: rect.width, height: rect.height - h - gap)
-            hit = CGRect(x: rect.minX, y: r1.maxY - 2, width: rect.width, height: gap + 4)
+            // The grab zone covers the gap and reaches 5 px into each tile, so grabbing a border works.
+            hit = CGRect(x: rect.minX, y: r1.maxY - 5, width: rect.width, height: gap + 10)
         } else {
             let w = (rect.width - gap) * node.ratio
             r1 = CGRect(x: rect.minX, y: rect.minY, width: w, height: rect.height)
             r2 = CGRect(x: r1.maxX + gap, y: rect.minY, width: rect.width - w - gap, height: rect.height)
-            hit = CGRect(x: r1.maxX - 2, y: rect.minY, width: gap + 4, height: rect.height)
+            hit = CGRect(x: r1.maxX - 5, y: rect.minY, width: gap + 10, height: rect.height)
         }
         dividers.append(Divider(node: node, rect: hit, region: rect))
         place(a, in: r1, gap: gap)
