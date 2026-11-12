@@ -96,6 +96,16 @@ them in Settings → Workspaces; the choice is saved. On a floating workspace wi
 The tiled arrangement is kept while a workspace floats, so switching back restores it, and each
 window remembers its floating position for next time.
 
+### Scratchpad
+
+⌘ N (or launcher → **Scratchpad**) opens your notes: a sidebar of notes (title = first line,
+newest first, with search) and an editor in the terminal font with light Markdown styling —
+`#` headings, `-` bullets, `- [ ]` tasks (click the box to tick it; done items are dimmed and struck
+through), `**bold**`, `` `code` ``, fenced code blocks, `>` quotes and clickable links. Notes autosave
+as you type and are plain `.md` files in `~/.config/lucent/notes/`, so any editor or sync tool can
+use them. **New note** (or ⌘ ⇧ N inside the Scratchpad); hover a note to move it to the Trash.
+The open note comes back with session restore.
+
 ### Ports
 
 ⌘ P (or launcher → **Ports**) lists what's listening on TCP ports — dev servers, databases, local
