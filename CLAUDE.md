@@ -42,6 +42,10 @@ open build/Lucent.app             # native full screen (own Space); --windowed /
 | `Apps/SettingsApp.swift`, `Apps/StatsApp.swift`, `Apps/SystemStats.swift` | Settings UI; Stats dashboard + samplers |
 | `Apps/ScratchpadApp.swift`, `Apps/NotesStore.swift` | Scratchpad: Markdown notes as files in `~/.config/lucent/notes` (`MarkdownStyler`, click-to-toggle tasks) |
 | `Apps/PortsApp.swift`, `Apps/PortScanner.swift` | Ports: listening TCP sockets via libproc (`isDev` filter), open/terminal/stop actions |
+| `VM/VMLibrary.swift` | VMs on disk (`VMConfig`, `CloudImage` catalogue), image download/unpack, APFS-clone disks, cloud-init seed ISO, IP lookup in dhcpd_leases |
+| `VM/QCOW2.swift` | QCOW2 → sparse raw converter (zlib clusters via Compression) — no qemu-img dependency |
+| `VM/VMManager.swift` | `VMInstance` (VZVirtualMachine, console pipes + history, start/stop) and `VMManager.shared` |
+| `VM/MachinesApp.swift`, `VM/VMConsoleApp.swift` | Machines list/New VM form; serial-console terminal tile |
 | `UI/` | Desktop (wallpaper, stage, overlays), bar, launcher + help overlays |
 | `LatencyProbe.swift`, `TypingBenchmark.swift` | Debug-only typing latency tools |
 
@@ -123,6 +127,44 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   `devTools` rather than loosening the folder rule. Actions use `WindowManager.openURL` (new tab in
   an existing browser, else a browser tile) and `openTerminal(in:)`; Stop = SIGTERM, then an
   NSAlert offering SIGKILL.
+- **Machines / Linux VMs** (`Mod+M`, Apple Virtualization.framework — chosen over QEMU; user
+  said "use apple with cloud images"). Images (`CloudImage.all`, picked in the New VM form):
+  Debian 13/12 (tar.xz with `disk.raw`), Ubuntu 26.04/24.04/26.10, Fedora (latest, resolved
+  from releases.json), Rocky 10, AlmaLinux 10 (the 9s were dropped — user decision), Alpine (latest, resolved from the
+  latest-stable listing) — all QCOW2, converted by `QCOW2.swift` (zstd/backing files/extended
+  L2 unsupported). Raw images are cached in `vms/images/<id>.raw`; each VM's `disk.img` is an
+  APFS clone, truncated up to its size (cloud-init grows the partition). Don't offer interim
+  Ubuntu releases past EOL (25.10 ended July 2026). EFI boot loader + variable store, generic platform
+  with a persisted machine id, NAT network with a persisted MAC, virtio console = hvc0.
+  - App must be signed with `Resources/Lucent.entitlements` (`com.apple.security.virtualization`)
+    — `build-app.sh` does it; an unsigned `swift run` binary can't start VMs.
+  - cloud-init NoCloud seed (`hdiutil makehybrid … cidata`): user = Mac username, NOPASSWD sudo
+    rule (no `groups:` — sudo vs wheel differs per distro), `~/.ssh/*.pub` keys, autologin on
+    hvc0 (systemd drop-in for serial-getty; Alpine/busybox: inittab `getty -n -l` + `packages:
+    [bash, sudo]`; Alpine's user gets `hashed_passwd: "*"` instead of `lock_passwd` — its
+    OpenSSH has no PAM and refuses even key logins for a locked "!" account), and `network-config` with
+    `dhcp-identifier: mac` — systemd-networkd sends a DUID by default, so the lease in
+    `/var/db/dhcpd_leases` didn't carry the MAC and the IP wasn't found (hostname = fallback).
+  - Serial consoles have no window-size signalling: `/etc/profile.d/lucent-console.sh` sends
+    `CSI 18 t` before each prompt on hvc0 and `stty`s the answer (the console tile answers via
+    `TerminalView.answerWindowOp`, shared with LucentTerminalView). The `read` **must keep
+    `-t 1`**: without it the prompt hung forever whenever no console tile was open to answer
+    (Ubuntu/Rocky never showed a prompt; Debian 12 took 144 s).
+  - Downloads and "latest" lookups go through `VMLibrary.retrying` (a dropped connection once
+    failed Fedora's releases.json fetch).
+  - All 9 images boot, get an IP, ssh + sudo and stop cleanly; the console prompt (≈ 6–20 s) was
+    re-verified after the `-t 1` fix on all but Ubuntu 26.04/26.10 (same setup as 24.04).
+  - VMs belong to `VMManager`, not tiles: closing the console tile leaves the VM running; Enter
+    in a stopped VM's console starts it. Console tiles aren't session-restored; VMs don't
+    survive a quit.
+  - Quit with VMs running → `.terminateLater` + `stopAll` (ACPI request, force off after 15 s).
+    **VM timers must be added in `.common` run-loop mode**: during `.terminateLater` AppKit runs
+    the loop in modal-panel mode, a default-mode timer never fired and Lucent hung with Quit
+    greyed out.
+  - SSH button (key icon) opens a terminal tile running `ssh` with a separate known_hosts in
+    the VMs folder (recreated VMs reuse IPs). Console icon = serial console (no network needed).
+  - Measured: boot to logged-in prompt ≈ 6 s; clean shutdown ≈ 3 s (longer during first-boot
+    cloud-init).
 - **Native full screen is the default** (user wants the separate Space / Mission Control page).
   The notch strip is intentionally unused — user said not to worry about it. The title bar is
   hidden in full screen (container + AppKit's lazily created full-screen title-bar window made
@@ -150,6 +192,12 @@ The user runs Lucent while we work. Test instances must not interfere:
   bundle ID, so `WKWebsiteDataStore.default()` is the user's real browser store — clearing it signs
   them out everywhere. Test `BrowsingData` history clearing only (the `.clearBrowserHistory`
   notification), and never open the modal Clear dialog in a background test.
+- To test Machines, set `ML_VMS_DIR` to a scratchpad folder (copy/clone the cached image into
+  its `images/` to skip the download), drive it from a temporary `runDebugArguments` hook
+  (`VMLibrary.create` → `VMManager.shared.instance(id)!.start()`, read `vm.consoleHistory`,
+  `vm.ipAddress`, ssh with `BatchMode=yes`), and stop the VM before terminating. Run the built
+  `.app` binary (it carries the entitlement). macOS has no `timeout` command — use the
+  `& P=$!` / `kill -0` loop.
 - To test Ports, start a throwaway server in the scratchpad (`python3 -m http.server PORT --bind
   127.0.0.1` from a scratch folder), keep its PID and kill it afterwards. For quick scanner checks,
   compile `PortScanner.swift` plus the `ProcStats` part of `SystemStats.swift` into a small CLI with
@@ -158,7 +206,7 @@ The user runs Lucent while we work. Test instances must not interfere:
 
 Debug flags / env: `--windowed`, `--borderless`, `--open terminal,browser`, `--workspace N`,
 `--launcher`, `--help-overlay`, `--type 'cmd\n'`, `--snapshot out.png`, `--no-confirm-quit`,
-`--bench-typing` (+`ML_BENCH_INTERVAL`), `ML_LATENCY_LOG=1`, `ML_PTY_LOG=<file>`,
+`--bench-typing` (+`ML_BENCH_INTERVAL`), `ML_VMS_DIR=<dir>` (Machines tests — never touch the user's VMs), `ML_LATENCY_LOG=1`, `ML_PTY_LOG=<file>`,
 `ML_WINDOW_LOG=1`, `ML_SESSION_FILE=<path>`, `ML_NOTES_DIR=<dir>` (Scratchpad tests — never touch
 the user's notes), `ML_NO_SESSION=1`, `ML_BLUR=1`, `ML_BACKGROUND=1`.
 Logs go to `~/Library/Logs/Lucent/`.
@@ -183,7 +231,9 @@ Logs go to `~/Library/Logs/Lucent/`.
   wrong Space/workspace), the Dock appears whenever another app is frontmost (only fixable by
   toggling the system Dock auto-hide), and apps fight the sizes they're given. The branches
   (`native-apps-wip`, `native-apps`) were deleted; Lucent has only its own built-in tile apps.
-- **App ideas discussed** (Ports and Scratchpad are done): Projects
+- **VMs, next stages** (branch `vms`): management (edit CPUs/memory, resize disk, clone,
+  snapshots), graphical display (`VZVirtualMachineView`), shared folders (virtiofs), more images.
+- **App ideas discussed** (Ports, Scratchpad and Machines are done): Projects
   (per-project workspace layouts), Git status/diff, Files browser, Markdown/HTML live preview,
   Dev toolbox (JSON/Base64/JWT/regex), clipboard history, HTTP client.
 - Browser can't embed real Safari (SFSafariViewController is iOS-only) or Firefox (no Gecko
