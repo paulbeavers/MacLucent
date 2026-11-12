@@ -40,6 +40,7 @@ open build/Lucent.app             # native full screen (own Space); --windowed /
 | `Apps/TerminalApp.swift` / `TerminalCompat.swift` | SwiftTerm terminal running bash; PTY output filter |
 | `Apps/BrowserApp.swift` | Tabbed WKWebView browser (`BrowserTab`, `TabBarView`) |
 | `Apps/SettingsApp.swift`, `Apps/StatsApp.swift`, `Apps/SystemStats.swift` | Settings UI; Stats dashboard + samplers |
+| `Apps/PortsApp.swift`, `Apps/PortScanner.swift` | Ports: listening TCP sockets via libproc (`isDev` filter), open/terminal/stop actions |
 | `UI/` | Desktop (wallpaper, stage, overlays), bar, launcher + help overlays |
 | `LatencyProbe.swift`, `TypingBenchmark.swift` | Debug-only typing latency tools |
 
@@ -131,7 +132,7 @@ Logs go to `~/Library/Logs/Lucent/`.
   wrong Space/workspace), the Dock appears whenever another app is frontmost (only fixable by
   toggling the system Dock auto-hide), and apps fight the sizes they're given. The branches
   (`native-apps-wip`, `native-apps`) were deleted; Lucent has only its own built-in tile apps.
-- **App ideas discussed** (none started): Ports/dev-servers list, Scratchpad notes, Projects
+- **App ideas discussed** (Ports is done): Scratchpad notes, Projects
   (per-project workspace layouts), Git status/diff, Files browser, Markdown/HTML live preview,
   Dev toolbox (JSON/Base64/JWT/regex), clipboard history, HTTP client.
 - Browser can't embed real Safari (SFSafariViewController is iOS-only) or Firefox (no Gecko

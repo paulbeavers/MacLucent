@@ -633,6 +633,24 @@ final class WindowManager {
         return current.focused?.app.handleKey(e) ?? false
     }
 
+    /// Open a URL in a browser tile: a new tab in a browser on this workspace (or any browser),
+    /// otherwise a new browser tile.
+    func openURL(_ url: String) {
+        let browsers = allWindows.filter { $0.app is BrowserApp }
+        if let tile = browsers.first(where: { workspace(of: $0) === current }) ?? browsers.first,
+           let browser = tile.app as? BrowserApp {
+            browser.newTab(url: url)
+            focus(tile)
+        } else {
+            open(BrowserApp(manager: self, url: url)).appID = "browser"
+        }
+    }
+
+    /// Open a terminal tile in `directory` (home if nil).
+    func openTerminal(in directory: String?) {
+        open(TerminalApp(directory: directory)).appID = "terminal"
+    }
+
     func showThemePicker() {
         desktop.showOverlay(ThemePickerOverlay())
     }

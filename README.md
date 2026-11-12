@@ -96,6 +96,17 @@ them in Settings → Workspaces; the choice is saved. On a floating workspace wi
 The tiled arrangement is kept while a workspace floats, so switching back restores it, and each
 window remembers its floating position for next time.
 
+### Ports
+
+⌘ P (or launcher → **Ports**) lists what's listening on TCP ports — dev servers, databases, local
+tools — refreshed every 2 s: port, whether it's localhost-only or open to the network, the process
+and its command line, the folder it was started from, and how long it has been running. Per row:
+**open** `http://localhost:PORT` in a browser tile (a new tab in an existing browser), **open a
+terminal** in its folder, or **stop** it (SIGTERM, with a Force Stop offer if it doesn't quit).
+↑/↓ select, Enter or double-click opens. Background app helpers and macOS services are hidden
+unless you tick **Show all**. Sockets are found with libproc (no `lsof`); only your own processes
+are visible.
+
 ### Themes
 
 Lucent for the Mac uses **the same themes as the Lucent Hyprland config** — the `*.theme` files
