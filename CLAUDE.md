@@ -130,6 +130,10 @@ The user runs Lucent while we work. Test instances must not interfere:
   restore the file from a backup copy (pattern used throughout). Synthetic keys/mouse via
   `NSApp.sendEvent(NSEvent.keyEvent/mouseEvent …)` go through the real monitors.
 - No Accessibility permission for the shell: can't post real HID events.
+- **Never clear website data (cookies/cache) from a test instance**: test copies use the same
+  bundle ID, so `WKWebsiteDataStore.default()` is the user's real browser store — clearing it signs
+  them out everywhere. Test `BrowsingData` history clearing only (the `.clearBrowserHistory`
+  notification), and never open the modal Clear dialog in a background test.
 - To test Ports, start a throwaway server in the scratchpad (`python3 -m http.server PORT --bind
   127.0.0.1` from a scratch folder), keep its PID and kill it afterwards. For quick scanner checks,
   compile `PortScanner.swift` plus the `ProcStats` part of `SystemStats.swift` into a small CLI with

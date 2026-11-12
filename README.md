@@ -61,6 +61,11 @@ servers load fine. Links that open a new window (`target=_blank`, `window.open`)
 new tab; ⌘-click or middle-click opens a link in a background tab. Middle-click a tab or
 click its × to close it; double-click empty tab-bar space for a new tab.
 
+**Settings → Browser → Browsing data → Clear…** removes, for a chosen time range (last hour / day /
+week / all time): cookies and site data (signs you out), cached files, and back/forward history
+plus recently closed tabs (open tabs are rebuilt and reload, since WebKit can't erase a tab's
+history in place).
+
 ## Architecture
 
 ```

@@ -89,6 +89,10 @@ final class SettingsApp: NSObject, TileApp {
         header("Browser", nil)
         text("Home page", get: { self.c.homepage }, set: { self.c.homepage = $0 })
         text("Search URL", note: "%s is replaced by the query", get: { self.c.searchURL }, set: { self.c.searchURL = $0 })
+        let clearButton = NSButton(title: "Clear…", target: nil, action: nil)
+        clearButton.bezelStyle = .rounded
+        bind(clearButton) { BrowsingData.presentClearDialog() }
+        row("Browsing data", note: "Cookies, cache and history of the browser tiles", control: clearButton, controlWidth: 90)
 
         header("Wallpaper", nil)
         wallpaperRow()

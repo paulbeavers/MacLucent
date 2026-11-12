@@ -125,6 +125,7 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
 
         newTab(url: url ?? c.homepage)
         NotificationCenter.default.addObserver(self, selector: #selector(configChanged), name: .configDidChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(clearHistory), name: .clearBrowserHistory, object: nil)
     }
 
     private var appliedTheme = Config.shared.themeID
@@ -159,9 +160,14 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         tab.webView.isHidden = true
         view.addSubview(tab.webView)
         // Open next to the current tab, like Safari (or at the end when restoring).
-        let index = tabs.isEmpty ? 0 : (atEnd ? tabs.count : activeIndex + 1)
+        let wasEmpty = tabs.isEmpty
+        let index = wasEmpty ? 0 : (atEnd ? tabs.count : activeIndex + 1)
         tabs.insert(tab, at: index)
-        if !select, index <= activeIndex { activeIndex += 1 }
+        if wasEmpty {
+            activeIndex = 0
+        } else if !select, index <= activeIndex {
+            activeIndex += 1 // the active tab moved one place right
+        }
         if let url, let u = Self.resolve(url) { tab.webView.load(URLRequest(url: u)) }
         if select || tabs.count == 1 {
             selectTab(index)
@@ -204,6 +210,19 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         selectTab(next)
     }
 
+    /// Settings → Clear browsing data. WebKit can't erase a web view's back/forward list, so each
+    /// tab is rebuilt with a fresh web view at the same page; the closed-tab list is emptied.
+    @objc func clearHistory() {
+        closedTabs.removeAll()
+        let pages = tabs.map { $0.displayURL?.absoluteString }
+        let active = activeIndex
+        tabs.forEach { $0.shutdown() }
+        tabs.removeAll()
+        activeIndex = 0
+        for page in pages { newTab(url: page ?? Config.shared.homepage, select: false, atEnd: true) }
+        selectTab(min(active, tabs.count - 1))
+    }
+
     func reopenClosedTab() {
         guard let u = closedTabs.popLast() else { NSSound.beep(); return }
         newTab(url: u.absoluteString)
@@ -215,6 +234,8 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
     }
 
     private func tabChanged(_ tab: BrowserTab, _ change: BrowserTab.Change) {
+        // Pages report progress at any time — including while tabs are being rebuilt.
+        guard tabs.indices.contains(activeIndex) else { return }
         let isActive = tab === activeTab
         switch change {
         case .title:
