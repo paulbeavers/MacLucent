@@ -112,6 +112,9 @@ enum AppRegistry {
                       make: { wm in PortsApp(manager: wm) }),
         AppDescriptor(id: "machines", name: "Machines", symbolName: "server.rack", shortcut: .key("M"), singleInstance: true,
                       make: { wm in MachinesApp(manager: wm) }),
+        AppDescriptor(id: "containers", name: "Containers", symbolName: "shippingbox", shortcut: .key("O"), singleInstance: true,
+                      make: { wm in ContainersApp(manager: wm) },
+                      restore: { wm, s in ContainersApp(manager: wm, tab: ContainersApp.Tab(rawValue: s["tab"]?.int ?? 0) ?? .containers) }),
         AppDescriptor(id: "themes", name: "Themes…", symbolName: "paintpalette",
                       action: { wm in wm.showThemePicker() }),
     ]
