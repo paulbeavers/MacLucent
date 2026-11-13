@@ -42,6 +42,7 @@ open build/Lucent.app             # native full screen (own Space); --windowed /
 | `Apps/SettingsApp.swift`, `Apps/StatsApp.swift`, `Apps/SystemStats.swift` | Settings UI; Stats dashboard + samplers |
 | `Apps/ScratchpadApp.swift`, `Apps/NotesStore.swift` | Scratchpad: Markdown notes as files in `~/.config/lucent/notes` (`MarkdownStyler`, click-to-toggle tasks) |
 | `Apps/PortsApp.swift`, `Apps/PortScanner.swift` | Ports: listening TCP sockets via libproc (`isDev` filter), open/terminal/stop actions |
+| `Apps/ContainersApp.swift`, `Apps/DockerClient.swift` | Containers (Docker containers + images); Docker Engine API client over the Unix socket |
 | `VM/VMLibrary.swift` | VMs on disk (`VMConfig`, `CloudImage` catalogue), image download/unpack, APFS-clone disks, cloud-init seed ISO, IP lookup in dhcpd_leases |
 | `VM/QCOW2.swift` | QCOW2 → sparse raw converter (zlib clusters via Compression) — no qemu-img dependency |
 | `VM/VMManager.swift` | `VMInstance` (VZVirtualMachine, console pipes + history, start/stop) and `VMManager.shared` |
@@ -165,6 +166,20 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
     the VMs folder (recreated VMs reuse IPs). Console icon = serial console (no network needed).
   - Measured: boot to logged-in prompt ≈ 6 s; clean shutdown ≈ 3 s (longer during first-boot
     cloud-init).
+- **Containers app** (`Mod+O`; Mod+C would be Copy with ⌘, Mod+K is the terminal's clear).
+  Talks to the Docker Engine API directly over the daemon's Unix socket (`DockerClient`: own
+  HTTP/1.1 + chunked decoding, since URLSession can't reach a socket file) — no `docker ps`
+  parsing. Socket = DOCKER_HOST → current docker context (`~/.docker/config.json` →
+  `contexts/meta/<sha256(name)>/meta.json`) → known paths (Docker Desktop
+  `~/.docker/run/docker.sock` on this Mac, OrbStack, Colima, Podman, Rancher). Live via the
+  `/events` stream (bursts coalesced 0.3 s); a 3 s tick (only while visible) refreshes status
+  text in place and CPU/memory (`stats?stream=false`, ≈1 s each, run concurrently) and reconnects
+  when Docker starts later. Containers grouped by `com.docker.compose.project`; stopped ones
+  behind "Show stopped". Shell/logs/run open terminal tiles with the docker CLI
+  (`DockerClient.cliPath`; here `~/.docker/bin/docker`, not on PATH by default).
+  - **Decode leniently**: Docker 29 sends `"Ports": null` for a running container without ports;
+    strict decoding failed the whole list (nothing showed). `DockerContainer`/`DockerImage` use
+    `decodeIfPresent` with defaults.
 - **Native full screen is the default** (user wants the separate Space / Mission Control page).
   The notch strip is intentionally unused — user said not to worry about it. The title bar is
   hidden in full screen (container + AppKit's lazily created full-screen title-bar window made
@@ -198,6 +213,10 @@ The user runs Lucent while we work. Test instances must not interfere:
   `vm.ipAddress`, ssh with `BatchMode=yes`), and stop the VM before terminating. Run the built
   `.app` binary (it carries the entitlement). macOS has no `timeout` command — use the
   `& P=$!` / `kill -0` loop.
+- To test Containers, use only throwaway containers named `lucent-test-*` (and an image you
+  pull yourself, e.g. `alpine:3.20`), and remove them afterwards — never stop or remove the
+  user's containers or images. Don't trigger Remove/prune in a test instance (modal NSAlert). For
+  client checks, compile `DockerClient.swift` + a `VMError` stub + a main into a CLI with `swiftc`.
 - To test Ports, start a throwaway server in the scratchpad (`python3 -m http.server PORT --bind
   127.0.0.1` from a scratch folder), keep its PID and kill it afterwards. For quick scanner checks,
   compile `PortScanner.swift` plus the `ProcStats` part of `SystemStats.swift` into a small CLI with
@@ -233,7 +252,10 @@ Logs go to `~/Library/Logs/Lucent/`.
   (`native-apps-wip`, `native-apps`) were deleted; Lucent has only its own built-in tile apps.
 - **VMs, next stages** (branch `vms`): management (edit CPUs/memory, resize disk, clone,
   snapshots), graphical display (`VZVirtualMachineView`), shared folders (virtiofs), more images.
-- **App ideas discussed** (Ports, Scratchpad and Machines are done): Projects
+- **Containers, next ideas**: volumes/networks, `docker system df` + prune, Compose up/down per
+  project (CLI in a terminal tile), Ports showing the container behind `com.docker.backend`,
+  managing Docker inside a Lucent VM over SSH.
+- **App ideas discussed** (Ports, Scratchpad, Machines and Containers are done): Projects
   (per-project workspace layouts), Git status/diff, Files browser, Markdown/HTML live preview,
   Dev toolbox (JSON/Base64/JWT/regex), clipboard history, HTTP client.
 - Browser can't embed real Safari (SFSafariViewController is iOS-only) or Firefox (no Gecko
