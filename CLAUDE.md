@@ -180,6 +180,12 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   - **Decode leniently**: Docker 29 sends `"Ports": null` for a running container without ports;
     strict decoding failed the whole list (nothing showed). `DockerContainer`/`DockerImage` use
     `decodeIfPresent` with defaults.
+- **Browser Web Inspector**: `webView.isInspectable` alone only allows remote inspection from
+  Safari's Develop menu — no right-click "Inspect Element". That item needs the private
+  `developerExtrasEnabled` WKPreferences key (set via KVC in `makeConfiguration`, guarded by
+  `responds(to: "_setDeveloperExtrasEnabled:")`). Keep both.
+- **Containers log buttons**: live logs (`docker logs -f`, running only) and log history
+  (`docker logs --timestamps … | less -R +G`, also for stopped containers).
 - **Native full screen is the default** (user wants the separate Space / Mission Control page).
   The notch strip is intentionally unused — user said not to worry about it. The title bar is
   hidden in full screen (container + AppKit's lazily created full-screen title-bar window made
