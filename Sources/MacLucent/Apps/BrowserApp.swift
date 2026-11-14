@@ -94,6 +94,13 @@ final class BrowserApp: NSObject, TileApp, WKNavigationDelegate, WKUIDelegate, N
         let c = WKWebViewConfiguration()
         c.websiteDataStore = .default() // shared by all tabs: stay signed in across them
         c.preferences.isElementFullscreenEnabled = true
+        // Web Inspector: "Inspect Element" in the right-click menu. `isInspectable` (set on each
+        // web view) only allows remote inspection from Safari's Develop menu; the context-menu
+        // item needs WebKit's developer-extras preference, which has no public API. Guarded, so
+        // a WebKit without it just loses the menu item.
+        if c.preferences.responds(to: NSSelectorFromString("_setDeveloperExtrasEnabled:")) {
+            c.preferences.setValue(true, forKey: "developerExtrasEnabled")
+        }
         return c
     }
 
