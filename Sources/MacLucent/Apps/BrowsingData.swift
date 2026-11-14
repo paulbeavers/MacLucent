@@ -54,7 +54,7 @@ enum BrowsingData {
 
         let alert = NSAlert()
         alert.messageText = "Clear browsing data"
-        alert.informativeText = "Applies to every browser tile in Lucent."
+        alert.informativeText = "Applies to every browser tile in \(Config.appName)."
         alert.accessoryView = stack
         alert.addButton(withTitle: "Clear")
         alert.addButton(withTitle: "Cancel")

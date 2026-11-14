@@ -1,6 +1,6 @@
 import Foundation
 
-/// One note: a plain Markdown file in ~/.config/lucent/notes.
+/// One note: a plain Markdown file in ~/.config/maclucent/notes.
 struct Note: Equatable {
     let url: URL
     var text: String

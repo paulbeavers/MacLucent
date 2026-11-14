@@ -54,7 +54,7 @@ final class VMConsoleApp: NSObject, TileApp, TerminalViewDelegate {
         if !out.isEmpty { terminal.feed(byteArray: out) }
     }
 
-    /// A Lucent message in the console, dimmed so it isn't mistaken for guest output.
+    /// A MacLucent message in the console, dimmed so it isn't mistaken for guest output.
     private func status(_ text: String) {
         terminal.feed(text: "\r\n\u{1B}[2m[lucent] \(text)\u{1B}[0m\r\n")
     }

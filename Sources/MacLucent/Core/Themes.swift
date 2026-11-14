@@ -90,7 +90,7 @@ struct LucentTheme {
 }
 
 /// The available themes: the Lucent themes bundled with the app (synced from the Lucent
-/// Hyprland config by scripts/sync-themes.sh), plus any in ~/.config/lucent/themes, which
+/// Hyprland config by scripts/sync-themes.sh), plus any in ~/.config/maclucent/themes, which
 /// override bundled ones with the same file name.
 enum ThemeLibrary {
     /// Lucent's own default (the Hyprland install.sh default).

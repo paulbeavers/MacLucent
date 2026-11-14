@@ -218,7 +218,7 @@ final class VMInstance: NSObject, VZVirtualMachineDelegate {
         if let mac = VZMACAddress(string: config.macAddress) { net.macAddress = mac }
         c.networkDevices = [net]
 
-        // hvc0: Lucent's console tile.
+        // hvc0: MacLucent's console tile.
         let console = VZVirtioConsoleDeviceSerialPortConfiguration()
         console.attachment = VZFileHandleSerialPortAttachment(fileHandleForReading: consoleInput,
                                                               fileHandleForWriting: consoleOutput)
@@ -272,7 +272,7 @@ final class VMManager {
         vms.forEach { $0.stop(timeout: timeout) }
         var waited: TimeInterval = 0
         // While a quit waits on .terminateLater, AppKit runs the run loop in the modal-panel mode:
-        // a default-mode timer would never fire and Lucent would hang with Quit greyed out.
+        // a default-mode timer would never fire and MacLucent would hang with Quit greyed out.
         let poll = Timer(timeInterval: 0.25, repeats: true) { t in
             MainActor.assumeIsolated {
                 waited += 0.25

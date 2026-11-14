@@ -1,6 +1,6 @@
 import AppKit
 
-/// Saved workspaces, layouts and window contents (~/.config/lucent/session.json).
+/// Saved workspaces, layouts and window contents (~/.config/maclucent/session.json).
 struct SessionFile: Codable {
     var version = 1
     var currentWorkspace: Int

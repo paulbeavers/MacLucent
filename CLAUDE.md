@@ -1,21 +1,21 @@
-# CLAUDE.md — Lucent
+# CLAUDE.md — MacLucent
 
-Lucent is a native macOS app (Swift/AppKit, no Xcode project — SwiftPM + a build script)
+MacLucent is a native macOS app (Swift/AppKit, no Xcode project — SwiftPM + a build script)
 that gives a **Hyprland-style tiling workspace** inside one full-screen window: workspaces,
 dwindle tiling, gaps/rounded/gradient borders, a waybar-like top bar, and tiled apps
 (bash terminals, a tabbed WebKit browser, Settings, Stats). It is "Lucent for the Mac" — the
-macOS counterpart of the user's **Lucent Hyprland config** project. Formerly named *mac-lucent*.
+macOS counterpart of the user's **Lucent Hyprland config** project. Renamed from *Lucent* (2026-11-14, user: separates it from the Hyprland project but stays similar); before that *mac-lucent*. Theme code keeps the `Lucent` prefix (`LucentTheme`, "Lucent themes") because those are the Hyprland project's themes.
 
 The README covers user-facing features and keybindings; this file covers how to work on it.
 
 ## Build, run, ship
 
 ```bash
-./scripts/build-app.sh            # release → build/Lucent.app (debug: ./scripts/build-app.sh debug)
-open build/Lucent.app             # native full screen (own Space); --windowed / --borderless also exist
+./scripts/build-app.sh            # release → build/MacLucent.app (debug: ./scripts/build-app.sh debug)
+open build/MacLucent.app          # native full screen (own Space); --windowed / --borderless also exist
 ```
 
-- After every change: **rebuild `build/Lucent.app`** so the user can just relaunch it.
+- After every change: **rebuild `build/MacLucent.app`** so the user can just relaunch it.
 - The build script stamps the git commit (`MLGitCommit`, "(modified)" if dirty) and SwiftTerm
   version into Info.plist — Stats shows them. Rebuild after committing so it shows the clean hash.
 - Ad-hoc signed with a stable designated requirement (bundle id) in `scripts/build-app.sh`.
@@ -32,7 +32,7 @@ open build/Lucent.app             # native full screen (own Space); --windowed /
 | `Core/LayoutTree.swift` | Dwindle binary tree: insert/remove/swap/resize, geometry, neighbour search |
 | `Core/Workspace.swift` | Workspace model (tiled/floating mode) + view (gap-drag resize, floating edge resize, empty hint) |
 | `Core/TileWindow.swift` | Window decoration: gradient border, rounding, shadow, dim |
-| `Core/Config.swift` | All settings (hyprland.conf-like), persistence to `~/.config/lucent/settings.json`, legacy-folder migration |
+| `Core/Config.swift` | All settings (hyprland.conf-like), persistence to `~/.config/maclucent/settings.json`, legacy-folder migration |
 | `Core/Session.swift` | Session save/restore (`session.json`), app-agnostic |
 | `Core/BundledFonts.swift` | Registers fonts in `Resources/Fonts` for the process |
 | `Core/Themes.swift`, `UI/ThemePicker.swift` | Lucent `*.theme` parser, `Palette` (19 roles), theme library; Settings grid + launcher picker |
@@ -40,7 +40,7 @@ open build/Lucent.app             # native full screen (own Space); --windowed /
 | `Apps/TerminalApp.swift` / `TerminalCompat.swift` | SwiftTerm terminal running bash; PTY output filter |
 | `Apps/BrowserApp.swift` | Tabbed WKWebView browser (`BrowserTab`, `TabBarView`) |
 | `Apps/SettingsApp.swift`, `Apps/StatsApp.swift`, `Apps/SystemStats.swift` | Settings UI; Stats dashboard + samplers |
-| `Apps/ScratchpadApp.swift`, `Apps/NotesStore.swift` | Scratchpad: Markdown notes as files in `~/.config/lucent/notes` (`MarkdownStyler`, click-to-toggle tasks) |
+| `Apps/ScratchpadApp.swift`, `Apps/NotesStore.swift` | Scratchpad: Markdown notes as files in `~/.config/maclucent/notes` (`MarkdownStyler`, click-to-toggle tasks) |
 | `Apps/PortsApp.swift`, `Apps/PortScanner.swift` | Ports: listening TCP sockets via libproc (`isDev` filter), open/terminal/stop actions |
 | `Apps/ContainersApp.swift`, `Apps/DockerClient.swift` | Containers (Docker containers + images); Docker Engine API client over the Unix socket |
 | `VM/VMLibrary.swift` | VMs on disk (`VMConfig`, `CloudImage` catalogue), image download/unpack, APFS-clone disks, cloud-init seed ISO, IP lookup in dhcpd_leases |
@@ -82,7 +82,7 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
 - **`TerminalOutputFilter`** strips `CSI ? u` / `CSI > n u` / `CSI < u` / `CSI = n u` from PTY
   output: SwiftTerm 1.10.1 treats every `CSI … u` as restore-cursor, which made Claude Code's
   prompts redraw at the top of the window. Handles sequences split across reads.
-- **bash starts via Lucent's rc file**, not `--login`: `bash --rcfile <tmp>/lucent-bash-startup.sh -i`
+- **bash starts via MacLucent's rc file**, not `--login`: `bash --rcfile <tmp>/lucent-bash-startup.sh -i`
   (written by `TerminalApp.startupFile`). It sources /etc/profile, then ~/.bash_profile /
   .bash_login / .profile, else ~/.bashrc (the user has only a ~/.bashrc — the Lucent Mac bash setup —
   and zsh as login shell; a plain login bash skipped it and looked bare), then prepends
@@ -90,10 +90,10 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
   rc). Don't edit the user's dotfiles to fix shell setup.
 - **Window operations (`CSI Ps;… t`, XTWINOPS) never reach SwiftTerm.** In this build its
   `windowCommand` traps with "unexpected enum case" (Neovim sends `CSI 22;0;0t` at startup — it
-  crashed Lucent). `TerminalOutputFilter` removes them and `LucentTerminalView.answerWindowOp`
+  crashed MacLucent). `TerminalOutputFilter` removes them and `LucentTerminalView.answerWindowOp`
   answers the size queries (14/15/16/18/19, 20/21 empty); move/resize/title-stack are ignored.
 - **macOS window restoration is off** (`ApplePersistenceIgnoreState`, `isRestorable = false`):
-  Lucent restores its own session, and after a crash macOS otherwise blocks the next launch with
+  MacLucent restores its own session, and after a crash macOS otherwise blocks the next launch with
   a modal "reopen windows?" alert (it froze a test instance on the user's screen).
 - **Terminal scroller hidden**; terminal tint only fills the padding ring (no double alpha).
 - **Split borders are dragged in `WindowManager`'s local event monitor** (`beginSplitDrag` /
@@ -160,7 +160,7 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
     survive a quit.
   - Quit with VMs running → `.terminateLater` + `stopAll` (ACPI request, force off after 15 s).
     **VM timers must be added in `.common` run-loop mode**: during `.terminateLater` AppKit runs
-    the loop in modal-panel mode, a default-mode timer never fired and Lucent hung with Quit
+    the loop in modal-panel mode, a default-mode timer never fired and MacLucent hung with Quit
     greyed out.
   - SSH button (key icon) opens a terminal tile running `ssh` with a separate known_hosts in
     the VMs folder (recreated VMs reuse IPs). Console icon = serial console (no network needed).
@@ -198,7 +198,7 @@ Don't add per-app `switch` statements elsewhere. App shortcuts must not clash wi
 
 ## Testing without disturbing the user (important)
 
-The user runs Lucent while we work. Test instances must not interfere:
+The user runs MacLucent while we work. Test instances must not interfere:
 - Launch tests with **`ML_BACKGROUND=1`** (never activates/steals keyboard focus) and a
   self-terminating flag like `--snapshot <png>`; or background them with `& P=$!` and `kill $P`.
 - **Never `pkill`/`killall` the app by name** — it kills the user's copy (happened once).
@@ -234,14 +234,14 @@ Debug flags / env: `--windowed`, `--borderless`, `--open terminal,browser`, `--w
 `--bench-typing` (+`ML_BENCH_INTERVAL`), `ML_VMS_DIR=<dir>` (Machines tests — never touch the user's VMs), `ML_LATENCY_LOG=1`, `ML_PTY_LOG=<file>`,
 `ML_WINDOW_LOG=1`, `ML_SESSION_FILE=<path>`, `ML_NOTES_DIR=<dir>` (Scratchpad tests — never touch
 the user's notes), `ML_NO_SESSION=1`, `ML_BLUR=1`, `ML_BACKGROUND=1`.
-Logs go to `~/Library/Logs/Lucent/`.
+Logs go to `~/Library/Logs/MacLucent/`.
 
 ## Working with this user
 
 - **Commit and push only when asked** ("commit and push"). Split unrelated changes into separate
   commits (hunk-level when files are shared; verify the first commit builds on its own).
   Commit messages end with the Co-Authored-By line from the session.
-- After building, say plainly whether it's built and how to relaunch (`open build/Lucent.app`).
+- After building, say plainly whether it's built and how to relaunch (`open build/MacLucent.app`).
 - They test by hand and report; ask for specifics (which app, what happened) when vague.
 - Prefers Option (⌥) as modifier, floating workspace 1, focus-follows-mouse + raise-on-hover,
   Cascadia Code font — but these are their settings, not defaults to hard-code.
@@ -251,20 +251,20 @@ Logs go to `~/Library/Logs/Lucent/`.
 - **Tiling native Mac apps — tried twice and dropped (user decision, 2026-11-11). Don't propose
   it again unless asked.** True embedding of another app's window is impossible on macOS; the only
   route is the yabai/AeroSpace one (Accessibility API positions real windows over tiles, parks them
-  off-screen per workspace, CGEvent tap for global hotkeys, Lucent's window as a desktop-level
-  backdrop). Problems hit: app windows can't enter Lucent's full-screen Space (they opened on the
+  off-screen per workspace, CGEvent tap for global hotkeys, MacLucent's window as a desktop-level
+  backdrop). Problems hit: app windows can't enter MacLucent's full-screen Space (they opened on the
   wrong Space/workspace), the Dock appears whenever another app is frontmost (only fixable by
   toggling the system Dock auto-hide), and apps fight the sizes they're given. The branches
-  (`native-apps-wip`, `native-apps`) were deleted; Lucent has only its own built-in tile apps.
+  (`native-apps-wip`, `native-apps`) were deleted; MacLucent has only its own built-in tile apps.
 - **VMs, next stages** (branch `vms`): management (edit CPUs/memory, resize disk, clone,
   snapshots), graphical display (`VZVirtualMachineView`), shared folders (virtiofs), more images.
 - **Containers, next ideas**: volumes/networks, `docker system df` + prune, Compose up/down per
   project (CLI in a terminal tile), Ports showing the container behind `com.docker.backend`,
-  managing Docker inside a Lucent VM over SSH.
+  managing Docker inside a MacLucent VM over SSH.
 - **App ideas discussed** (Ports, Scratchpad, Machines and Containers are done): Projects
   (per-project workspace layouts), Git status/diff, Files browser, Markdown/HTML live preview,
   Dev toolbox (JSON/Base64/JWT/regex), clipboard history, HTTP client.
 - Browser can't embed real Safari (SFSafariViewController is iOS-only) or Firefox (no Gecko
   embedding on macOS); CEF (Chromium) would be possible but heavy.
-- Name check: "Tatami" is taken by a macOS tiling workspace manager; "Lucent" has no WM conflict
+- Name check: "Tatami" is taken by a macOS tiling workspace manager; "Lucent" has no WM conflict. Rename candidates checked 2026-11-14 and rejected: Shoji (a macOS window-zone app + pending software TM), Tiler, Trellis, Cairn (taken by Mac terminal/dev tools); Nagi was clean but the user chose MacLucent
   (Nokia holds a LUCENT telecom mark — check USPTO before any commercial release).

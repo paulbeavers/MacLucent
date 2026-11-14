@@ -109,7 +109,7 @@ enum VMError: LocalizedError {
     var errorDescription: String? { if case .message(let m) = self { return m }; return nil }
 }
 
-/// VMs on disk: ~/.config/lucent/vms/<id>/ with config.json, disk.img (raw, sparse), seed.iso
+/// VMs on disk: ~/.config/maclucent/vms/<id>/ with config.json, disk.img (raw, sparse), seed.iso
 /// (cloud-init), efi-vars and machine-id. Base images are cached in vms/images/.
 enum VMLibrary {
     static var directory: URL {
@@ -225,7 +225,7 @@ enum VMLibrary {
     // MARK: cloud-init
 
     /// A NoCloud seed (ISO9660 volume "cidata"): user, SSH keys, sudo, hostname, and console
-    /// autologin on hvc0 (Lucent's console tile).
+    /// autologin on hvc0 (MacLucent's console tile).
     static func writeSeed(for c: VMConfig) throws {
         let fm = FileManager.default
         let work = fm.temporaryDirectory.appendingPathComponent("lucent-seed-\(UUID().uuidString)")
@@ -291,7 +291,7 @@ enum VMLibrary {
         let metaData = "instance-id: \(c.id)-\(Int(c.created.timeIntervalSince1970))\nlocal-hostname: \(c.id)\n"
         try userData.write(to: work.appendingPathComponent("user-data"), atomically: true, encoding: .utf8)
         try metaData.write(to: work.appendingPathComponent("meta-data"), atomically: true, encoding: .utf8)
-        // DHCP with the MAC as client id (systemd-networkd sends a DUID by default), so Lucent can
+        // DHCP with the MAC as client id (systemd-networkd sends a DUID by default), so MacLucent can
         // find the VM's address in macOS's lease file.
         let network = """
         version: 2
@@ -310,10 +310,10 @@ enum VMLibrary {
                                      "-o", seed.path, work.path])
     }
 
-    /// The serial console has no window-size signalling, so on hvc0 the shell asks Lucent for
+    /// The serial console has no window-size signalling, so on hvc0 the shell asks MacLucent for
     /// the size before each prompt (`CSI 18 t`, answered by the console tile) and runs stty.
     static let consoleScript = #"""
-    # Lucent: keep the serial console's size in step with its tile.
+    # MacLucent: keep the serial console's size in step with its tile.
     if [ "$(tty 2>/dev/null)" = /dev/hvc0 ]; then
       __lucent_resize() {
         local saved rows cols

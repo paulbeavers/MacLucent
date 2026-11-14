@@ -17,12 +17,12 @@ final class StatsApp: NSObject, TileApp {
     private var c: Config { .shared }
 
     // header
-    private let heading = NSTextField(labelWithString: "Lucent")
+    private let heading = NSTextField(labelWithString: Config.appName)
     private let subheading = NSTextField(labelWithString: "")
 
     // tiles
-    private let appCPU = StatTile(label: "Lucent CPU")
-    private let appMemory = StatTile(label: "Lucent memory")
+    private let appCPU = StatTile(label: "\(Config.appName) CPU")
+    private let appMemory = StatTile(label: "\(Config.appName) memory")
     private let shellCPU = StatTile(label: "Shells CPU")
     private let shellMemory = StatTile(label: "Shells memory")
     private let systemCPU = StatTile(label: "System CPU")

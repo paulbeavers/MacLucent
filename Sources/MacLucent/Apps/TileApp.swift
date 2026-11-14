@@ -68,7 +68,7 @@ struct AppDescriptor {
     let id: String
     let name: String
     let symbolName: String
-    /// Launch shortcut (with the Lucent modifier). Must not clash with the window-manager
+    /// Launch shortcut (with the MacLucent modifier). Must not clash with the window-manager
     /// bindings: D W F J / Tab, digits and arrows.
     var shortcut: AppShortcut? = nil
     /// Only one window of this app may exist; launching again focuses it.

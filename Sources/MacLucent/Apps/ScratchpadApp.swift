@@ -1,7 +1,7 @@
 import AppKit
 
 /// Scratchpad: persistent Markdown notes — snippets, commands, TODOs — in a tile.
-/// Notes are plain files in ~/.config/lucent/notes, autosaved as you type.
+/// Notes are plain files in ~/.config/maclucent/notes, autosaved as you type.
 final class ScratchpadApp: NSObject, TileApp, NSTextViewDelegate, NSTextStorageDelegate, NSSearchFieldDelegate {
     let view: NSView
     var symbolName: String { "note.text" }
@@ -109,7 +109,7 @@ final class ScratchpadApp: NSObject, TileApp, NSTextViewDelegate, NSTextStorageD
 
     private func select(_ n: Note) {
         saveNow()
-        // Re-read it: it may have been changed outside Lucent.
+        // Re-read it: it may have been changed outside MacLucent.
         show(NotesStore.all().first { $0.url == n.url } ?? n)
         view.window?.makeFirstResponder(editor)
     }
@@ -246,7 +246,7 @@ final class ScratchpadApp: NSObject, TileApp, NSTextViewDelegate, NSTextStorageD
     // MARK: TileApp
 
     func focus() {
-        // Notes may have been added or edited outside Lucent.
+        // Notes may have been added or edited outside MacLucent.
         let fresh = NotesStore.all()
         if fresh.map(\.url) != notes.map(\.url) {
             notes = fresh

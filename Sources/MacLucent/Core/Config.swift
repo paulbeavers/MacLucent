@@ -38,7 +38,7 @@ enum ModifierKey: String {
     case command, option
 }
 
-/// The user-editable subset of `Config`, as stored in ~/.config/lucent/settings.json.
+/// The user-editable subset of `Config`, as stored in ~/.config/maclucent/settings.json.
 /// Every field is optional so older or hand-edited files still load.
 struct SettingsFile: Codable {
     var gapsIn: Double?
@@ -75,20 +75,23 @@ final class Config {
     static let shared = Config()
 
     /// The app's display name.
-    nonisolated static let appName = "Lucent"
+    nonisolated static let appName = "MacLucent"
 
-    /// ~/.config/lucent — settings, session and wallpaper.
+    /// ~/.config/maclucent — settings, session, wallpaper, notes, themes and VMs.
     nonisolated static var directory: URL {
-        URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/lucent")
+        URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/maclucent")
     }
 
-    /// The app used to be called mac-lucent; move its config folder over once.
+    /// The app used to be called Lucent (~/.config/lucent) and before that mac-lucent
+    /// (~/.config/mac-lucent); move the newest existing folder over once.
     nonisolated static func migrateLegacyDirectory() {
         // Scripted test runs must never move the user's real config.
         let env = ProcessInfo.processInfo.environment
         guard env["ML_BACKGROUND"] == nil, !CommandLine.arguments.contains("--snapshot") else { return }
-        let old = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".config/mac-lucent")
-        migrate(from: old, to: directory)
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        for name in [".config/lucent", ".config/mac-lucent"] {
+            migrate(from: home.appendingPathComponent(name), to: directory)
+        }
     }
 
     /// Move `old` to `new` if only the old folder exists. Separate from the paths for testing.

@@ -137,7 +137,7 @@ final class DockerClient: @unchecked Sendable {
             var tv = timeval(tv_sec: Int(timeout), tv_usec: 0)
             setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
         }
-        var req = "\(method) \(path) HTTP/1.1\r\nHost: docker\r\nUser-Agent: Lucent\r\nConnection: close\r\n"
+        var req = "\(method) \(path) HTTP/1.1\r\nHost: docker\r\nUser-Agent: MacLucent\r\nConnection: close\r\n"
         if let body {
             req += "Content-Type: application/json\r\nContent-Length: \(body.count)\r\n"
         } else if method == "POST" {
