@@ -288,7 +288,7 @@ final class ContainersApp: NSObject, TileApp {
 
     // MARK: Container actions
 
-    enum ContainerAction { case startStop, restart, pause, shell, logs, open, remove }
+    enum ContainerAction { case startStop, restart, pause, shell, logs, history, open, remove }
     enum ImageAction { case run, remove }
 
     private func perform(_ action: ContainerAction, on ct: DockerContainer) {
@@ -298,6 +298,10 @@ final class ContainersApp: NSObject, TileApp {
         case .shell:
             // bash when the image has it, else sh.
             manager?.openTerminal(in: nil, command: "'\(docker)' exec -it \(ct.name) sh -c 'command -v bash >/dev/null && exec bash || exec sh'")
+        case .history:
+            // The whole log so far, with timestamps, in a pager opened at the end (q quits).
+            // Works for stopped containers too, as long as they haven't been removed.
+            manager?.openTerminal(in: nil, command: "'\(docker)' logs --timestamps \(ct.name) 2>&1 | less -R +G")
         case .logs:
             manager?.openTerminal(in: nil, command: "'\(docker)' logs -f --tail 500 \(ct.name)")
         case .open:
@@ -729,13 +733,17 @@ final class ContainerRowView: DockerRowView {
                   ct.isPaused ? "Resume" : active ? "Stop" : "Start") { [weak self] in self?.onAction?(.startStop) }
         addButton("arrow.clockwise", "Restart") { [weak self] in self?.onAction?(.restart) }
         addButton("terminal", "Shell in a terminal tile (docker exec)") { [weak self] in self?.onAction?(.shell) }
-        addButton("doc.text", "Follow logs in a terminal tile") { [weak self] in self?.onAction?(.logs) }
+        addButton("doc.text", "Follow live logs in a terminal tile") { [weak self] in self?.onAction?(.logs) }
+        addButton("clock.arrow.circlepath", "Log history (also for stopped containers) in a pager — q quits") { [weak self] in
+            self?.onAction?(.history)
+        }
         addButton("safari", "Open the first published port in a browser tile") { [weak self] in self?.onAction?(.open) }
         addButton("trash", "Remove") { [weak self] in self?.onAction?(.remove) }
         buttons[1].isEnabled = ct.isRunning
         buttons[2].isEnabled = ct.isRunning
-        buttons[4].isEnabled = ct.isRunning && !ct.publishedPorts.isEmpty
-        buttons[5].isEnabled = !active
+        buttons[3].isEnabled = active // live logs only make sense while it runs
+        buttons[5].isEnabled = ct.isRunning && !ct.publishedPorts.isEmpty
+        buttons[6].isEnabled = !active
         updateStats()
         applyColors()
     }
@@ -759,7 +767,7 @@ final class ContainerRowView: DockerRowView {
     override func applyColors() {
         super.applyColors()
         let c = Config.shared
-        if buttons.count > 5, buttons[5].isEnabled { buttons[5].contentTintColor = c.red.withAlphaComponent(0.85) }
+        if buttons.count > 6, buttons[6].isEnabled { buttons[6].contentTintColor = c.red.withAlphaComponent(0.85) }
         if !container.isRunning && !container.isPaused { name.textColor = c.subtext }
     }
 }
