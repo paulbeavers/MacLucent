@@ -256,6 +256,8 @@ Logs go to `~/Library/Logs/MacLucent/`.
   wrong Space/workspace), the Dock appears whenever another app is frontmost (only fixable by
   toggling the system Dock auto-hide), and apps fight the sizes they're given. The branches
   (`native-apps-wip`, `native-apps`) were deleted; MacLucent has only its own built-in tile apps.
+  (2026-11-14: the user started that idea as a **separate project, `../shoji`** — a real Hyprland-style
+  tiling WM for macOS with its own bar/dock. Keep MacLucent itself free of native-app tiling.)
 - **VMs, next stages** (branch `vms`): management (edit CPUs/memory, resize disk, clone,
   snapshots), graphical display (`VZVirtualMachineView`), shared folders (virtiofs), more images.
 - **Containers, next ideas**: volumes/networks, `docker system df` + prune, Compose up/down per
