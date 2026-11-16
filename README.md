@@ -219,3 +219,8 @@ Apps can read `Config.shared` and observe `.configDidChange` to react to setting
 `--windowed`, `--open terminal,browser`, `--workspace N`, `--launcher`, `--help-overlay`,
 `--type 'cmd\n'` (types into all terminals), `--snapshot out.png` (renders the desktop and quits),
 `--no-confirm-quit`.
+
+## License
+
+MIT — see [LICENSE](LICENSE). The bundled fonts in `Resources/Fonts` keep their own licenses
+(SIL Open Font License 1.1, or MIT for Hack and the Nerd Fonts patches), included alongside them.

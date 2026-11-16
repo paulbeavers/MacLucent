@@ -15,6 +15,7 @@ cp "$BIN" "$APP/Contents/MacOS/MacLucent"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp -R Resources/Fonts "$APP/Contents/Resources/Fonts"   # bundled coding fonts + their licenses
 cp -R Resources/Themes "$APP/Contents/Resources/Themes" # Lucent themes (*.theme)
+install -m 644 LICENSE "$APP/Contents/Resources/LICENSE.txt"            # MIT, travels with every copy
 
 # Record build provenance for the Stats app.
 COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
