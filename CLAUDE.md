@@ -19,6 +19,14 @@ open build/MacLucent.app          # native full screen (own Space); --windowed /
 - The build script stamps the git commit (`MLGitCommit`, "(modified)" if dirty) and SwiftTerm
   version into Info.plist — Stats shows them. Rebuild after committing so it shows the clean hash.
 - Ad-hoc signed with a stable designated requirement (bundle id) in `scripts/build-app.sh`.
+- Release: `./scripts/package.sh` → `build/MacLucent-<date>-<commit>.dmg` (app + Applications
+  link, no installer). Signs a copy in `build/package` with the Developer ID, hardened runtime and
+  `Lucent.entitlements`; notarizes and staples the app, then the DMG (notarytool profile
+  `shoji-notary`, shared with ../shoji). The dev build keeps its ad-hoc signature.
+- Website: `web/` (end users only, no developer content), published to https://maclucent.pbcs.io
+  by `./scripts/deploy-web.sh` (S3 `maclucent-downloads-<account>` behind CloudFront; needs
+  `aws login`). `deploy-cdn.sh` set up the certificate/distribution/DNS once. Copies of shoji's.
+- MIT license (`LICENSE`, shipped as `Contents/Resources/LICENSE.txt`).
 - Remote: `git@github.com:paulbeavers/MacLucent.git` (SSH works). **Don't rename the remote.**
 - Bundle ID stays `dev.maclucent.mac-lucent` (changing it would drop browser cookies/logins).
   Swift module/target stays `MacLucent`; SwiftPM product is `lucent`.

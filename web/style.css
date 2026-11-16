@@ -1,0 +1,305 @@
+/* MacLucent — Catppuccin Mocha, its default theme, with the mauve → blue gradient
+   of the focused window border. Modelled on the Shoji and starch sites. */
+
+:root {
+  --crust:    #11111b;
+  --mantle:   #181825;
+  --base:     #1e1e2e;
+  --surface0: #313244;
+  --surface1: #45475a;
+  --overlay:  #6c7086;
+  --subtext:  #a6adc8;
+  --text:     #cdd6f4;
+  --sapphire: #74c7ec;
+  --blue:     #89b4fa;
+  --green:    #a6e3a1;
+  --peach:    #fab387;
+  --mauve:    #cba6f7;
+
+  --mono: ui-monospace, "JetBrains Mono", "JetBrainsMono Nerd Font",
+          "SFMono-Regular", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+
+  --measure: 68ch;
+  --gutter: 16px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background-color: var(--base);
+  /* The lattice is the wallpaper the desktop ships with, so the page opens on
+     the picture the installed machine shows. Fixed, so it reads as a backdrop
+     rather than something that scrolls past. */
+  background-image: linear-gradient(rgba(30, 30, 46, .82), rgba(17, 17, 27, .94)),
+                    url("assets/lattice.jpg");
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+
+header { padding: 72px 0 56px; text-align: center; }
+
+header img.mark {
+  width: 104px; height: auto;
+  margin: 0 auto 18px;
+  display: block;
+}
+
+h1 {
+  font-family: var(--mono);
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  letter-spacing: -.02em;
+  margin: 0;
+  /* The same mauve-to-sapphire ramp the focused window border draws. */
+  background: linear-gradient(45deg, var(--mauve), var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  font-family: var(--mono);
+  color: var(--mauve);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: .82rem;
+  margin: 10px 0 20px;
+}
+
+.lede {
+  max-width: var(--measure);
+  margin: 0 auto 32px;
+  color: var(--subtext);
+  font-size: 1.16rem;
+}
+
+/* ── download ─────────────────────────────────────────────────────────── */
+
+.get { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+.btn {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 1.02rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--crust);
+  background: linear-gradient(45deg, var(--mauve), var(--blue));
+  padding: 15px 34px;
+  border-radius: 10px;
+  border: 0;
+  transition: transform .12s ease, box-shadow .12s ease;
+  box-shadow: 0 6px 22px rgba(203, 166, 247, .2);
+}
+
+.btn:hover, .btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(203, 166, 247, .3);
+}
+
+.btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+.meta {
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--overlay);
+}
+
+.meta span + span::before { content: " · "; }
+
+/* ── sections ─────────────────────────────────────────────────────────── */
+
+section { padding: 44px 0; border-top: 1px solid var(--surface0); }
+
+h2 {
+  font-family: var(--mono);
+  font-size: 1.42rem;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+
+section > .wrap > p { max-width: var(--measure); color: var(--subtext); }
+
+section > .wrap > p strong { color: var(--text); font-weight: 600; }
+
+/* ── feature cards ────────────────────────────────────────────────────── */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.card {
+  background: rgba(24, 24, 37, .78);
+  border: 1px solid var(--surface0);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+.card h3 {
+  font-family: var(--mono);
+  font-size: .96rem;
+  margin: 0 0 6px;
+  color: var(--mauve);
+}
+
+.card p { margin: 0; color: var(--subtext); font-size: .94rem; }
+
+/* ── key table ────────────────────────────────────────────────────────── */
+
+.kit {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 22px;
+  font-size: .95rem;
+}
+
+.kit th, .kit td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--surface0);
+  vertical-align: top;
+}
+
+.kit th {
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 600;
+  width: 34%;
+  white-space: nowrap;
+}
+
+.kit td { color: var(--subtext); }
+
+.kit tr:last-child th, .kit tr:last-child td { border-bottom: 0; }
+
+/* ── code ─────────────────────────────────────────────────────────────── */
+
+pre {
+  background: var(--crust);
+  border: 1px solid var(--surface0);
+  border-radius: 10px;
+  padding: 15px 18px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: .87rem;
+  line-height: 1.55;
+  color: var(--text);
+  /* Deliberately not held to --measure. Prose wants a short line; a shell
+     command does not, and clipping one at 68ch hid the end of the dd line
+     behind a scrollbar — which is exactly the part worth reading. */
+}
+
+/* The overflow scrollbar defaults to the platform's light one, which on this
+   background arrives as a bright white bar under the code. */
+pre::-webkit-scrollbar { height: 10px; }
+pre::-webkit-scrollbar-track { background: var(--crust); border-radius: 0 0 10px 10px; }
+pre::-webkit-scrollbar-thumb {
+  background: var(--surface1);
+  border-radius: 6px;
+  border: 2px solid var(--crust);
+}
+pre::-webkit-scrollbar-thumb:hover { background: var(--overlay); }
+pre { scrollbar-width: thin; scrollbar-color: var(--surface1) var(--crust); }
+
+pre .c { color: var(--overlay); }
+
+code {
+  font-family: var(--mono);
+  font-size: .9em;
+  background: rgba(49, 50, 68, .55);
+  padding: .12em .42em;
+  border-radius: 5px;
+  color: var(--text);
+}
+
+/* ── links ────────────────────────────────────────────────────────────── */
+
+a { color: var(--sapphire); }
+a:hover { color: var(--blue); }
+
+/* ── footer ───────────────────────────────────────────────────────────── */
+
+footer {
+  border-top: 1px solid var(--surface0);
+  padding: 32px 0 56px;
+  color: var(--overlay);
+  font-size: .88rem;
+}
+
+footer .links { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 14px; }
+footer .links a { font-family: var(--mono); font-size: .9rem; }
+
+/* ── the desktop drawing ──────────────────────────────────────────────── */
+
+.shot { margin: 52px auto 0; max-width: 860px; }
+.shot svg {
+  display: block; width: 100%; height: auto;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+  font-family: var(--mono);
+}
+.shot .mb { font-family: var(--sans); font-size: 12px; fill: var(--subtext); }
+.shot .mb.b { fill: var(--text); font-weight: 700; }
+.shot .pill { font-size: 10px; font-weight: 700; text-anchor: middle; fill: var(--text); }
+.shot .pill.on { fill: var(--crust); }
+.shot .pill.dim { fill: var(--overlay); }
+.shot .pill.gear { font-family: var(--sans); font-size: 12px; fill: var(--subtext); }
+.shot .ui { font-family: var(--sans); font-size: 11.5px; fill: var(--subtext); }
+.shot .ui.b { font-weight: 700; fill: var(--text); }
+.shot .ui.h { font-size: 15px; font-weight: 700; fill: var(--text); }
+.shot .ui.d { fill: var(--overlay); }
+.shot .ui.c { text-anchor: middle; }
+.shot .ui.done { fill: var(--overlay); text-decoration: line-through; }
+.shot .cal text { font-family: var(--sans); font-size: 10px; text-anchor: middle; fill: var(--overlay); font-weight: 600; }
+.shot .cal.n text { fill: var(--subtext); font-weight: 400; }
+.shot .cal.n text.today { fill: var(--crust); font-weight: 700; }
+
+/* ── install steps ────────────────────────────────────────────────────── */
+
+.steps { max-width: var(--measure); color: var(--subtext); padding-left: 1.3em; margin: 18px 0 22px; }
+.steps li { margin-bottom: 12px; padding-left: 4px; }
+.steps li::marker { font-family: var(--mono); color: var(--mauve); font-weight: 700; }
+.steps strong { color: var(--text); font-weight: 600; }
+
+.get.left { align-items: flex-start; margin-top: 22px; }
+
+@media (max-width: 620px) {
+  body { font-size: 16px; }
+  header { padding: 52px 0 40px; }
+  .kit th { width: auto; white-space: normal; }
+  .kit, .kit tbody, .kit tr, .kit th, .kit td { display: block; }
+  .kit th { border-bottom: 0; padding-bottom: 0; }
+  .kit td { padding-top: 2px; }
+}
+
+/* ── MacLucent's drawing: terminal text, monospace rows ───────────────── */
+
+.shot .term text { font-family: var(--mono); font-size: 11.5px; fill: var(--text); white-space: pre; }
+.shot .term .d { fill: var(--overlay); }
+.shot .term .g { fill: var(--green); }
+.shot .term .m { fill: var(--mauve); }
+.shot .term .b { fill: var(--blue); }
+.shot .term .y { fill: #f9e2af; }
+.shot .term .cur { fill: var(--text); }
+.shot .ui.mono { font-family: var(--mono); fill: var(--text); white-space: pre; }

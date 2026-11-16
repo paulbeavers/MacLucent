@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MacLucent — a tiling workspace for developers on the Mac</title>
+<meta name="description" content="MacLucent is a full-screen, Hyprland-style tiling workspace for the Mac: terminals, a browser, notes, ports, Linux VMs and Docker, side by side across nine workspaces.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="style.css">
+
+<meta property="og:title" content="MacLucent — a tiling workspace for developers on the Mac">
+<meta property="og:description" content="Terminals, a browser, notes, ports, Linux VMs and Docker, tiled side by side in one full-screen workspace.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/maclucent-icon.png">
+</head>
+
+<body>
+
+<!-- DOWNLOAD-URL, DOWNLOAD-SIZE and RELEASE-VERSION are filled in when the site is published. -->
+
+<header>
+  <div class="wrap">
+    <img class="mark" src="assets/maclucent-icon.png" alt="The MacLucent icon" width="112" height="112">
+    <h1>maclucent</h1>
+    <p class="tagline">A tiling workspace for developers</p>
+    <p class="lede">
+      One full-screen app with everything a day of coding needs — terminals,
+      a browser, notes, your running servers, Linux machines and Docker —
+      laid out side by side, the way a Linux tiling desktop does it. Nine
+      workspaces, all at your fingertips on the keyboard.
+    </p>
+
+    <div class="get">
+      <a class="btn" href="DOWNLOAD-URL">Download for Mac</a>
+      <p class="meta">
+        <span>RELEASE-VERSION</span><span>macOS 13 or later</span><span>Apple silicon</span><span>DOWNLOAD-SIZE</span>
+      </p>
+    </div>
+
+    <figure class="shot" aria-label="MacLucent in full screen: a bar with workspace numbers at the top, a terminal on the left half, a browser at the top right, and the Ports list and a notes page side by side below it">
+      <svg viewBox="0 0 800 470" role="img" aria-hidden="true">
+        <defs>
+          <linearGradient id="focus" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#cba6f7"/><stop offset="1" stop-color="#89b4fa"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="800" height="470" rx="14" fill="#11111b" opacity=".78"/>
+
+        <!-- the bar -->
+        <rect x="10" y="8" width="780" height="26" rx="9" fill="#181825"/>
+        <g transform="translate(22 13)">
+          <rect x="0" y="0" width="22" height="16" rx="8" fill="url(#focus)"/><text x="11" y="12" class="pill on">1</text>
+          <rect x="26" y="0" width="22" height="16" rx="8" fill="#313244"/><text x="37" y="12" class="pill">2</text>
+          <rect x="52" y="0" width="22" height="16" rx="8" fill="#313244"/><text x="63" y="12" class="pill">3</text>
+          <rect x="78" y="0" width="22" height="16" rx="8" fill="#313244" opacity=".5"/><text x="89" y="12" class="pill dim">4</text>
+        </g>
+        <text x="400" y="26" class="mb b" text-anchor="middle">~/projects/web — bash</text>
+        <text x="700" y="26" class="mb">cpu 7%</text>
+        <text x="752" y="26" class="mb">9:41</text>
+
+        <!-- terminal: the focused window, left half -->
+        <rect x="14" y="44" width="380" height="412" rx="12" fill="#1e1e2e" stroke="url(#focus)" stroke-width="2"/>
+        <g transform="translate(14 44)" class="term">
+          <text x="18" y="30"><tspan class="g">~/projects/web</tspan> <tspan class="m">main</tspan> $ npm run dev</text>
+          <text x="18" y="52" class="d">&gt; web@1.0.0 dev</text>
+          <text x="18" y="70" class="d">&gt; vite</text>
+          <text x="18" y="96"><tspan class="g">  VITE v6.2</tspan> <tspan class="d">ready in 312 ms</tspan></text>
+          <text x="18" y="120"><tspan class="m">  ➜</tspan>  Local:   <tspan class="b">http://localhost:5173/</tspan></text>
+          <text x="18" y="140"><tspan class="m">  ➜</tspan>  <tspan class="d">Network: use --host to expose</tspan></text>
+          <text x="18" y="170" class="d">  10:02:11 [vite] page reload src/App.tsx</text>
+          <text x="18" y="190" class="d">  10:02:40 [vite] hmr update /src/Nav.tsx</text>
+          <text x="18" y="236"><tspan class="g">~/projects/web</tspan> <tspan class="m">main</tspan> $ git status -s</text>
+          <text x="18" y="258"><tspan class="y"> M</tspan> src/App.tsx</text>
+          <text x="18" y="278"><tspan class="y"> M</tspan> src/Nav.tsx</text>
+          <text x="18" y="298"><tspan class="g">??</tspan> src/Footer.tsx</text>
+          <text x="18" y="330"><tspan class="g">~/projects/web</tspan> <tspan class="m">main</tspan> $ <tspan class="cur">▌</tspan></text>
+        </g>
+
+        <!-- browser: top right -->
+        <rect x="406" y="44" width="380" height="200" rx="12" fill="#1e1e2e" stroke="#313244" stroke-width="2"/>
+        <g transform="translate(406 44)">
+          <rect x="12" y="10" width="96" height="18" rx="6" fill="#313244"/>
+          <text x="60" y="23" class="ui c">My app</text>
+          <text x="128" y="23" class="ui d">Docs</text>
+          <rect x="12" y="34" width="356" height="18" rx="6" fill="#181825"/>
+          <text x="24" y="47" class="ui">localhost:5173</text>
+          <rect x="12" y="62" width="356" height="26" rx="6" fill="#313244"/>
+          <rect x="22" y="71" width="60" height="8" rx="4" fill="#cba6f7"/>
+          <rect x="250" y="71" width="30" height="8" rx="4" fill="#6c7086"/>
+          <rect x="290" y="71" width="30" height="8" rx="4" fill="#6c7086"/>
+          <rect x="330" y="71" width="28" height="8" rx="4" fill="#6c7086"/>
+          <rect x="22" y="104" width="200" height="14" rx="7" fill="#cdd6f4" opacity=".85"/>
+          <rect x="22" y="128" width="300" height="7" rx="3.5" fill="#6c7086"/>
+          <rect x="22" y="143" width="260" height="7" rx="3.5" fill="#6c7086"/>
+          <rect x="22" y="166" width="84" height="20" rx="6" fill="url(#focus)"/>
+        </g>
+
+        <!-- Ports: bottom middle -->
+        <rect x="406" y="256" width="184" height="200" rx="12" fill="#1e1e2e" stroke="#313244" stroke-width="2"/>
+        <g transform="translate(406 256)">
+          <text x="16" y="28" class="ui b">Ports</text>
+          <g class="row"><text x="16" y="56" class="ui mono">5173</text><text x="62" y="56" class="ui">node</text><circle cx="164" cy="52" r="4" fill="#a6e3a1"/></g>
+          <g class="row"><text x="16" y="82" class="ui mono">5432</text><text x="62" y="82" class="ui">postgres</text><circle cx="164" cy="78" r="4" fill="#a6e3a1"/></g>
+          <g class="row"><text x="16" y="108" class="ui mono">6379</text><text x="62" y="108" class="ui">redis</text><circle cx="164" cy="104" r="4" fill="#a6e3a1"/></g>
+          <g class="row"><text x="16" y="134" class="ui mono">8000</text><text x="62" y="134" class="ui">python3</text><circle cx="164" cy="130" r="4" fill="#f9e2af"/></g>
+          <text x="16" y="176" class="ui d">4 listening</text>
+        </g>
+
+        <!-- Scratchpad: bottom right -->
+        <rect x="602" y="256" width="184" height="200" rx="12" fill="#1e1e2e" stroke="#313244" stroke-width="2"/>
+        <g transform="translate(602 256)">
+          <text x="16" y="30" class="ui h"># Today</text>
+          <rect x="16" y="46" width="10" height="10" rx="2" fill="#cba6f7"/>
+          <text x="34" y="55" class="ui done">Fix the nav bar</text>
+          <rect x="16" y="68" width="10" height="10" rx="2" fill="none" stroke="#cba6f7" stroke-width="1.5"/>
+          <text x="34" y="77" class="ui">Footer component</text>
+          <rect x="16" y="90" width="10" height="10" rx="2" fill="none" stroke="#cba6f7" stroke-width="1.5"/>
+          <text x="34" y="99" class="ui">Try Postgres 18</text>
+          <rect x="16" y="120" width="152" height="50" rx="6" fill="#181825"/>
+          <text x="26" y="140" class="ui mono">docker compose</text>
+          <text x="26" y="158" class="ui mono">  up -d db</text>
+        </g>
+      </svg>
+    </figure>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Why MacLucent?</h2>
+    <p>
+      On Linux, many developers live in a tiling desktop: every window has its
+      place on the screen, nothing hides behind anything else, and the keyboard
+      takes you anywhere. MacLucent brings that way of working to the Mac.
+    </p>
+    <p>
+      It is one app that fills the screen, with its own windows inside it.
+      Open a terminal and it takes half the screen; open a browser and the two
+      share it; open more and they keep making room for each other. Put your
+      editor and servers on one workspace, docs on another, and jump between
+      them with a keypress.
+    </p>
+    <p>
+      MacLucent runs in its own full-screen Space, so the rest of your Mac stays
+      as it is — swipe across to your other apps whenever you need them.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What's inside</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Terminals</h3>
+        <p>Fast terminals running bash with your own setup. A new one opens in the folder you're working in. Nerd Font, JetBrains Mono, Fira Code, Cascadia Code and Hack are built in.</p>
+      </div>
+      <div class="card">
+        <h3>A browser</h3>
+        <p>Tabs, shared sign-ins, the Web Inspector, and local dev servers that just load. Links that open a new window open as a new tab instead.</p>
+      </div>
+      <div class="card">
+        <h3>Ports</h3>
+        <p>See what's listening — dev servers, databases, local tools — and open it in the browser, open a terminal in its folder, or stop it.</p>
+      </div>
+      <div class="card">
+        <h3>Linux machines</h3>
+        <p>Create a Debian, Ubuntu, Fedora, Rocky, AlmaLinux or Alpine machine in a few clicks. It boots in seconds, signs you in, and is ready for ssh.</p>
+      </div>
+      <div class="card">
+        <h3>Containers</h3>
+        <p>Your Docker containers and images, grouped by Compose project, with live CPU and memory, logs, and a shell one click away.</p>
+      </div>
+      <div class="card">
+        <h3>Scratchpad</h3>
+        <p>Quick Markdown notes with clickable checklists. They're plain files, so any editor or sync tool can use them too.</p>
+      </div>
+      <div class="card">
+        <h3>Seventeen themes</h3>
+        <p>Catppuccin, Dracula, Nord, Tokyo Night, Gruvbox, Rosé Pine and more, dark and light — borders, terminal colours and wallpaper all change together.</p>
+      </div>
+      <div class="card">
+        <h3>Tiled or floating</h3>
+        <p>Each workspace tiles its windows or lets them float freely. Drag the gap between two windows to resize them, and set gaps, borders and rounding to taste.</p>
+      </div>
+      <div class="card">
+        <h3>Picks up where you left off</h3>
+        <p>Quit and reopen: your workspaces, layouts, terminal folders and browser tabs come back just as they were.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>A few keys to start with</h2>
+    <p>Everything works with the mouse too. Press <strong>Command&nbsp;/</strong> any time to see every shortcut.</p>
+    <table class="kit">
+      <tr><th>Command Return</th><td>New terminal</td></tr>
+      <tr><th>Command B</th><td>New browser</td></tr>
+      <tr><th>Command D</th><td>Open anything by typing its name</td></tr>
+      <tr><th>Command ← → ↑ ↓</th><td>Move between windows</td></tr>
+      <tr><th>Command Shift ← → ↑ ↓</th><td>Swap a window with its neighbour</td></tr>
+      <tr><th>Command 1 … 9</th><td>Go to a workspace</td></tr>
+      <tr><th>Command Shift 1 … 9</th><td>Send the window to a workspace</td></tr>
+      <tr><th>Command F</th><td>Make the window fill the screen, and back</td></tr>
+      <tr><th>Command W</th><td>Close the window</td></tr>
+      <tr><th>Command ,</th><td>Settings</td></tr>
+    </table>
+    <p style="margin-top:22px">
+      Rather use Option? Settings switches every MacLucent shortcut to the
+      Option key, and Option-Tab then flips through your busy workspaces.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Install</h2>
+    <ol class="steps">
+      <li>
+        <strong>Open the download and drag MacLucent into Applications.</strong>
+      </li>
+      <li>
+        <strong>Open MacLucent.</strong> It starts in full screen with a
+        terminal. Press <strong>Command&nbsp;D</strong> to see what else you
+        can open.
+      </li>
+    </ol>
+    <p>
+      Nothing else is installed: no system changes, no extra permissions.
+      Settings, notes and Linux machines live in <code>~/.config/maclucent</code>.
+      The Containers view needs Docker Desktop, OrbStack or Colima.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Get MacLucent</h2>
+    <p>
+      For Macs with Apple silicon (M1 or newer) running macOS 13 Ventura or
+      later.
+    </p>
+    <div class="get left">
+      <a class="btn" href="DOWNLOAD-URL">Download for Mac</a>
+      <p class="meta">
+        <span>RELEASE-VERSION</span><span>DOWNLOAD-SIZE</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="https://github.com/paulbeavers/MacLucent">MacLucent on GitHub</a>
+      <a href="https://github.com/paulbeavers/MacLucent/blob/main/LICENSE">MIT license</a>
+      <a href="https://shoji.pbcs.io">Shoji</a>
+    </div>
+    <p style="margin:0">
+      MacLucent is free and open source. It is an independent project and is not affiliated with Apple.
+    </p>
+  </div>
+</footer>
+</body>
+</html>
